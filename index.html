@@ -133,14 +133,14 @@
             let posX;
             let posY;
             let updatePos = ()=>{
-                posX = e.pageX-dragTarget.offsetWidth/2; //temp values
-                posY = e.pageY-game.offsetHeight-dragTarget.offsetHeight; //temp values
+                posX = e.pageX-dragTarget.offsetWidth/2;
+                posY = e.pageY-game.offsetHeight-dragTarget.offsetHeight+50; //50 is the select anim
                 dragTarget.style.transform = `translate(${posX}px, ${posY}px)`;
             }
             updatePos(); 
             let onDrag = (e)=>{
                 posX = e.pageX-dragTarget.offsetWidth/2; //250 //750
-                posY = e.pageY-game.offsetHeight-dragTarget.offsetHeight; //350 //500
+                posY = e.pageY-game.offsetHeight-dragTarget.offsetHeight+50; //50 is the select anim
                 dragTarget.style.transform = `translate(${posX}px, ${posY}px)`;
                 //debug
                 let rect = dragTarget.getBoundingClientRect();
