@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>♠️♣️CARDS♥️♦️</title>
+</head>
+    X:<input type="text" id="x">  Y:<input type="text" id="y">
+    <div id="game" style="user-select: none;">
+        <div class="outer-card draggable prototype">
+            <div class="inner-card flippable">
+                <div class="front-face">
+                    <span class="number top">A</span>
+                    <span class="suit top"></span>
+                    <span class="card-display">
+                        <span class="column left"></span>
+                        <span class="column middle"></span>
+                        <span class="column right"></span>
+                    </span>
+                    <span class="suit bot"></span>
+                    <span class="number bot">A</span>
+                </div>
+                <div class="back-face">
+                    <span class="card-back-display">CARD</span>
+                </div>
+            </div>
+        </div>
+        <div class="hand"></div>
+    </div>
+<script type="text/javascript">
+    var game = document.getElementById('game');
+    const protoSuit = document.createElement('span');
+    protoSuit.classList.add('suit');
+    const protoCard = game.querySelector('.outer-card'); //GET THE PROTOTYPE ELEMENT
+    const cardData = {
+        numbers : ['A','2','3','4','5','6','7','8','9','10','J','Q','K'],
+        suits : ['♠️','♣️','♥️','♦️'],
+        get randomNumber(){
+            return getRandomFromArr(this.numbers);
+        },
+        get randomSuit(){
+            return getRandomFromArr(this.suits);
+        },
+    };
+    function Card(suit, number){
+        this.suit = suit; this.number = number;
+    }
+    function createCard(number = cardData.randomNumber, suit = cardData.randomSuit){
+        let clone = protoCard.cloneNode(true);
+        clone.classList.remove('prototype');
+        clone._number_ = number;
+        clone._suit_ = suit;
+        clone._cardDisplay_= clone.querySelector('.card-display');
+        clone._cardCanvases_=clone.querySelectorAll('.card-canvas'); //FLIP USING CSS
+        let leftCol = clone._cardDisplay_.querySelector('.column.left');
+        let midCol = clone._cardDisplay_.querySelector('.column.middle');
+        let rightCol = clone._cardDisplay_.querySelector('.column.right');
+        //CREATE SUIT OBJECT BASE ON NUMBERS HERE
+        let appendSuits=(l,m,r)=>{//ADD SUIT TO COLUMNS
+            for(let i=0; i<l; i++){
+                leftCol.appendChild(protoSuit.cloneNode());
+            }
+            for(let i=0; i<m; i++){
+                midCol.appendChild(protoSuit.cloneNode());
+            }
+            for(let i=0; i<r; i++){
+                rightCol.appendChild(protoSuit.cloneNode());
+            }
+            rotateBotSuits();
+        }
+        let rotateBotSuits=()=>{
+            [leftCol, midCol, rightCol].forEach(innerArr=>{
+                let botHalfCount = Math.floor(innerArr.children.length/2);
+                let slicePos = innerArr.children.length - botHalfCount;
+                let botHalf = [...innerArr.children].slice(slicePos);
+                [...botHalf].forEach(suit=>{suit.style.transform = 'rotate(180deg)'});
+            });
+        }
+        let hideSuit=(col, index)=>{
+            col.children[index].style.visibility ='hidden';
+        }
+        switch (clone._number_){
+            case 'A':appendSuits(0,1,0);break;
+            case '2':appendSuits(0,2,0);break;
+            case '3':appendSuits(0,3,0);break;
+            case '4':appendSuits(2,0,2);break;
+            case '5':appendSuits(2,1,2);break;
+            case '6':appendSuits(3,0,3);break;
+            case '7':appendSuits(3,2,3); hideSuit(midCol, 1); break;
+            case '8':appendSuits(3,2,3);break;
+            case '9':appendSuits(4,1,4);break;
+            case '10':appendSuits(4,2,4);break;
+            case 'J': case 'Q': case 'K':
+                appendSuits(2,0,2);
+                hideSuit(leftCol, 1);
+                hideSuit(rightCol, 0);
+                break;
+        }
+        [...clone.querySelectorAll('.number')].forEach(element=>{element.innerHTML = number;});
+        [...clone.querySelectorAll('.suit')].forEach(element=>{element.innerHTML = suit;});
+
+        clone.style.color = ['♥️','♦️'].includes(clone._suit_) ? 'crimson' : 'black';
+        
+        return clone;
+    }
+    
+    //WHEN PAGE FINISH LOADING //PROBABLY WANT TO USE DEFERED ON THE SCRIPT INSTEAD
+
+    window.onload = function(){
+       for(let i =0; i<5; i++){
+             let hand = game.querySelector('.hand');//TEST
+             hand.appendChild(createCard()); //TEST
+            //game.appendChild(createCard());
+       }
+        //game.appendChild(createCard());
+       getDraggables();
+    };
+    //
+    //UTIL
+    //
+    let draggables = [];
+    function getDraggables(){
+        draggables = document.querySelectorAll('.draggable');
+        [...draggables].forEach(element=>{
+            element.addEventListener('mousedown', startDrag);
+        });
+
+        function startDrag(e){
+            let dragTarget= e.target.closest('.draggable');
+            // console.log([dragTarget, 'START DRAG']);
+            dragTarget.style.position = 'absolute';
+            game.appendChild(dragTarget);
+            let posX;
+            let posY;
+            let updatePos = ()=>{
+                posX = e.pageX-dragTarget.offsetWidth/2; //temp values
+                posY = e.pageY-game.offsetHeight-dragTarget.offsetHeight; //temp values
+                dragTarget.style.transform = `translate(${posX}px, ${posY}px)`;
+            }
+            updatePos(); 
+            let onDrag = (e)=>{
+                posX = e.pageX-dragTarget.offsetWidth/2; //250 //750
+                posY = e.pageY-game.offsetHeight-dragTarget.offsetHeight; //350 //500
+                dragTarget.style.transform = `translate(${posX}px, ${posY}px)`;
+                //debug
+                let rect = dragTarget.getBoundingClientRect();
+                document.getElementById('x').value = rect.left;
+                document.getElementById('y').value = rect.top;
+            }
+            document.addEventListener('mousemove', onDrag);
+            document.addEventListener('mouseup', e=>{
+                // dragTarget.style.position = 'relative';
+                document.removeEventListener('mousemove', onDrag)
+           });
+        }
+    }
+    function getRandomFromArr(arr){
+        let i = Math.floor(Math.random() * arr.length);
+        return arr[i];
+    }
+
+</script>
+<style>
+    :root{/*dark theme*/
+        background-color: rgb(42, 42, 42);
+        color: azure;
+    }
+    .suit{/*CONSISTENT EMOJI FONT FOR ALL PLATFORMS?*/
+        font-family: "Segoe UI Emoji";
+    }
+    #game .hand{
+        outline: rgb(189, 255, 8) 3px solid;
+        display: flex;
+        justify-content: center;
+        box-sizing:border-box;
+        height: 350px;
+        margin-top: 10%;/*HAND AT THE BOTTOM*/
+    }
+    /* .outer-card{/*DEBUG*/
+       /* background-color:rgb(64, 0, 255); */
+    /*} */
+    #game .hand .outer-card:not(:active){
+        /*FOR CARD HAND EFFECT*/
+        margin-right: -95px;
+        margin-left: -95px;
+    }
+    #game .outer-card:hover{ /*ON MOUSE HOVER SELECT PULL OUT CARD*/
+        margin-top: -50px;
+    }
+    #game .flippable:active{ /*ON MOUSE DOWN FLIPPING CARD ANIMATION*/
+        transform: rotateY(180deg);
+        z-index: 5;
+        margin: 0px;
+    }
+    .front-face, .back-face{
+        width:inherit;
+        height:inherit;
+        position: absolute;/*MAKES POSITION STAYS IN PLACE*/
+        backface-visibility: hidden;
+        text-align: center;
+        border-radius: 5%;
+        perspective: 4000px; /*DETERMINES FORESHORTENING*/
+        box-sizing: border-box; /*MAKES BORDER STARTS IN BOX, RATHER OUTSIDE BOX*/
+        border-radius: 5%;
+        box-shadow:-2px 0px 15px rgba(0, 0, 0, 0.741);
+    }
+    #game .outer-card{
+        /*ANIMATION*/
+        transition: margin-top 0.3s; /*non-flips*/
+        /*CARD SIZE*/
+        width:250px;
+        height:350px;
+    }
+    #game .inner-card{/*inner*/
+        /*ANIMATION*/
+        transition: transform 0.5s; /*flips*/
+        position: relative;
+        transform-style: preserve-3d;
+
+        width: inherit;
+        height: inherit;
+    }
+    #game .inner-card>.back-face{/*STYLES FOR CARD BACK*/
+        transform: rotateY(180deg);
+        
+        border: 15px solid whitesmoke;
+        background-color: whitesmoke;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    #game .inner-card>.back-face .card-back-display{
+        background-color: rgb(34, 48, 118);
+        color: whitesmoke;
+        height: 100%;
+        width: 100%;
+        border-radius: 5%;
+        
+    }
+    #game .inner-card>.front-face{
+        background-color: whitesmoke;
+        display: grid;
+        grid-template-rows: repeat(3, 1fr) repeat(2, 3.5fr) repeat(3, 1fr);
+        grid-template-columns: 1fr 4fr 1fr;
+        text-align: center;
+    }
+    #game .inner-card .card-display{
+        width: 100%;
+        height: 100%;
+        grid-row: 2/8;
+        grid-column: 2/3;
+        /*background-color: rgba(137, 43, 226, 0.201); DEBUG*/
+        justify-content: center;
+        display: flex;
+        flex-direction: row;
+        grid-template-rows: repeat(8, 1fr);
+        grid-template-columns: repeat(3, 1fr);
+    }
+    #game .inner-card .card-display .column{/*PARENT OF MIDDLE SUIT*/
+        flex: 1; /*keep column size equal*/
+        display: flex; /*suits are flex items*/
+        flex-direction: column;
+        align-items: center;
+        justify-content: center; /*PUT CHILD ELEMENT IN VERTICAL CENTER*/
+        /*width: 0px; NO CLUE WHY, STOPS ROTATED SUITS FROM BREAKING*/
+        /*white-space: nowrap;/*NOT NEEDED, ONLY ONE LETTER*/
+        /*text-align: center; /*NOT NEEDED, DOESN'T WORK FOR INITIAL SPACING*/
+        /* outline:rgb(0, 139, 35) 3px solid; */
+    }
+    #game .inner-card .card-display .column .suit{/*DISPLAYED MIDDLE SUITS*/
+        position: relative;
+        flex : 0 !important;
+        display: block;
+        margin: auto;
+        font-size : 30pt; /*SUIT SIZE*/
+        /* MANUALLY SET KEEP SUIT CENTERED, WILL BREAK IF FONT-SIZE CHANGED
+        ** NOT PIXEL PERFECT, BUT GOOD ENOUGH 
+        ** NO WAY TO CENTER TEXT WITH ANCHOR IN MIDDLE OF LETTER
+        ** CAN TRY USING CANVASCONTEXT.MEASURETEXT() 
+        */
+        /*margin-left: -.165em;*/ 
+    }
+    #game .inner-card .card-display .column:not(.middle) :first-child{
+        margin-top: 0%;
+    }
+    #game .inner-card .card-display .column:not(.middle) :last-child{
+        margin-bottom: 0%;
+    }
+    #game .inner-card .suit.mid{
+        /* outline:rgb(0, 139, 35) 3px solid; */
+        width: 100%;
+        height: 100%;
+    }
+    #game .inner-card .suit.top{
+        font-size : 20pt;
+        transform: rotate(0deg);
+        grid-row: 3/4;
+        grid-column: 1/2;
+    }
+    #game .inner-card .suit.bot{
+        font-size : 20pt;
+        transform: rotateX(180deg);
+        grid-row: 5/6;
+        grid-column: 3/4;
+    }
+    #game .inner-card .number{
+        width: 100%;
+        height: 100%;
+        text-align: center;
+        letter-spacing:-.15em;
+        font-size : 35pt;
+        font-weight: bold;
+        display: block;
+        /* outline:rgb(139, 2, 0) 3px solid;  */
+    }
+    #game .inner-card .number.top{
+        transform: rotate(0deg);
+        grid-row: 1/3;
+        grid-column: 1/2;
+        margin-left:-0.075em;
+    }
+    #game .inner-card .number.bot{
+        transform: rotate(180deg);
+        grid-row: 6/8;
+        grid-column: 3/4;
+        margin-left:0.075em;
+    }
+    #game .prototype{
+        display: none !important;
+    }
+    /*#game .card :nth-child(even){
+        background-color: rgb(236, 140, 22);
+    }*/
+</style>
+</html>
