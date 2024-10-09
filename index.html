@@ -115,7 +115,7 @@
             let rect = dragTarget.getBoundingClientRect();
             document.getElementById('x').value = rect.left;
             document.getElementById('y').value = rect.top;
-            dragTarget.style.transition = 'top 0s, left 0s, flex 1s';
+            dragTarget.style.transition = 'top 0s, left 0s';
             DRAG_START = {
                 mousePos: {x: e.clientX, y: e.clientY},
                 pos: {x: dragTarget.getBoundingClientRect().x, y: dragTarget.getBoundingClientRect().y}//TODO CALC SELECT OFFSET
@@ -141,7 +141,7 @@
                 document.removeEventListener('mousemove', onDrag);
                 dragTarget.style.top = `${DRAG_START.pos.y}px`; //MOVE TO BACK START POSITION
                 dragTarget.style.left =`${DRAG_START.pos.x}px`;//MOVE TO BACK START POSITION
-                dragTarget.style.transition = 'top 1s, left 1s, flex 1s';
+                dragTarget.style.transition = 'top 1s, left 1s';
                 dragTarget.addEventListener('transitionend', endTransistion);// { once: true }IS THIS SHIT EVERN WORKING?
            }
             function endTransistion(transistionEvent){
@@ -190,11 +190,26 @@
     /* .outer-card{/*DEBUG*/
        /* background-color:rgb(64, 0, 255); */
     /*} */
-    #game .hand .outer-card:not(:active){
+    #game .outer-card{
+        /*ANIMATION*/
+        /*transform 0.5s; non-flips*/
+        /*CARD SIZE*/
+        width:250px;
+        height:350px;
+        /* transition: flex-grow 1s; */
+        /* display: inline-block; *//*TEST NEW HAND ALTERNATIVE*/
+        /*margin-right: -200px; TEST NEW HAND ALTERNATIVE*/
+    }
+    #game :not(.hand) .outer-card{/*CARD NOT IN HAND*/
+        flex: 0;
+    }
+    #game .hand .outer-card{/*CARD IN HAND*/
+        flex: 0;
+    }
+    #game .hand .outer-card:not(:active){ /*CARD IN HAND, NOT BEING DRAGGED
         /*FOR CARD HAND EFFECT*/
-        /* margin-right: -95px;
-        margin-left: -95px; */
-        transition: flex-grow 1s;
+        margin-right: -95px;
+        margin-left: -95px;
     }
     #game .outer-card:hover .inner-card{ /*ON MOUSE HOVER SELECT PULL OUT CARD*/
         margin-top: -50px;
@@ -210,15 +225,7 @@
         z-index: 5;
         margin: 0px;
     }
-    #game .outer-card{
-        /*ANIMATION*/
-        /*transform 0.5s; non-flips*/
-        /*CARD SIZE*/
-        width:250px;
-        height:350px;
-        /* display: inline-block; *//*TEST NEW HAND ALTERNATIVE*/
-        /*margin-right: -200px; TEST NEW HAND ALTERNATIVE*/
-    }
+    
     #game .inner-card{/*inner*/
         /*ANIMATION*/
         transition: transform 0.5s, margin-top 0.3s; /*flips*/
