@@ -5,28 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>♠️♣️CARDS♥️♦️</title>
 </head>
-    X:<input type="text" id="x">  Y:<input type="text" id="y">
+    X:<input type="text" id="x">  Y:<input type="text" id="y"> <br>
+    mX:<input type="text" id="mx">  mY:<input type="text" id="my">
     <div id="game" style="user-select: none;">
-        <div class="outer-card draggable prototype">
-            <div class="inner-card flippable">
-                <div class="front-face">
-                    <span class="number top">A</span>
-                    <span class="suit top"></span>
-                    <span class="card-display">
-                        <span class="column left"></span>
-                        <span class="column middle"></span>
-                        <span class="column right"></span>
-                    </span>
-                    <span class="suit bot"></span>
-                    <span class="number bot">A</span>
-                </div>
-                <div class="back-face">
-                    <span class="card-back-display">CARD</span>
-                </div>
-            </div>
-        </div>
+            <div class="outer-card draggable prototype">
+                <div class="inner-card flippable">
+                    <div class="front-face">
+                        <span class="number top">A</span>
+                        <span class="suit top"></span>
+                        <span class="card-display">
+                            <span class="column left"></span>
+                            <span class="column middle"></span>
+                            <span class="column right"></span>
+                        </span><!--end card-display-->
+                        <span class="suit bot"></span>
+                        <span class="number bot">A</span>
+                    </div><!--end front-face-->
+                    <div class="back-face">
+                        <span class="card-back-display">CARD</span>
+                    </div><!--end back-face-->
+                </div><!--end inner-card-->
+            </div><!--end outer-card-->
         <div class="hand"></div>
-    </div>
+    </div><!--end #game-->
 <script type="text/javascript">
     var game = document.getElementById('game');
     const protoSuit = document.createElement('span');
@@ -35,16 +36,10 @@
     const cardData = {
         numbers : ['A','2','3','4','5','6','7','8','9','10','J','Q','K'],
         suits : ['♠️','♣️','♥️','♦️'],
-        get randomNumber(){
-            return getRandomFromArr(this.numbers);
-        },
-        get randomSuit(){
-            return getRandomFromArr(this.suits);
-        },
+        get randomNumber(){return getRandomFromArr(this.numbers);},
+        get randomSuit(){return getRandomFromArr(this.suits);},
     };
-    function Card(suit, number){
-        this.suit = suit; this.number = number;
-    }
+    function Card(suit, number){this.suit = suit; this.number = number;}
     function createCard(number = cardData.randomNumber, suit = cardData.randomSuit){
         let clone = protoCard.cloneNode(true);
         clone.classList.remove('prototype');
@@ -57,15 +52,9 @@
         let rightCol = clone._cardDisplay_.querySelector('.column.right');
         //CREATE SUIT OBJECT BASE ON NUMBERS HERE
         let appendSuits=(l,m,r)=>{//ADD SUIT TO COLUMNS
-            for(let i=0; i<l; i++){
-                leftCol.appendChild(protoSuit.cloneNode());
-            }
-            for(let i=0; i<m; i++){
-                midCol.appendChild(protoSuit.cloneNode());
-            }
-            for(let i=0; i<r; i++){
-                rightCol.appendChild(protoSuit.cloneNode());
-            }
+            for(let i=0; i<l; i++){leftCol.appendChild(protoSuit.cloneNode());}
+            for(let i=0; i<m; i++){midCol.appendChild(protoSuit.cloneNode());}
+            for(let i=0; i<r; i++){rightCol.appendChild(protoSuit.cloneNode());}
             rotateBotSuits();
         }
         let rotateBotSuits=()=>{
@@ -98,14 +87,11 @@
         }
         [...clone.querySelectorAll('.number')].forEach(element=>{element.innerHTML = number;});
         [...clone.querySelectorAll('.suit')].forEach(element=>{element.innerHTML = suit;});
-
         clone.style.color = ['♥️','♦️'].includes(clone._suit_) ? 'crimson' : 'black';
-        
         return clone;
     }
     
     //WHEN PAGE FINISH LOADING //PROBABLY WANT TO USE DEFERED ON THE SCRIPT INSTEAD
-
     window.onload = function(){
        for(let i =0; i<5; i++){
              let hand = game.querySelector('.hand');//TEST
@@ -116,49 +102,66 @@
        getDraggables();
     };
     //
-    //UTIL
+    //CARD DRAGGABLE
     //
-    let draggables = [];
+    var draggables = [];
     function getDraggables(){
         draggables = document.querySelectorAll('.draggable');
-        [...draggables].forEach(element=>{
-            element.addEventListener('mousedown', startDrag);
-        });
+        [...draggables].forEach(element=>{element.addEventListener('mousedown', startDrag)});
 
+        let DRAG_START = {mousePos: {x:0, y:0},pos: {x:0, y:0}}
         function startDrag(e){
             let dragTarget= e.target.closest('.draggable');
-            // console.log([dragTarget, 'START DRAG']);
-            dragTarget.style.position = 'absolute';
-            game.appendChild(dragTarget);
-            let posX;
-            let posY;
-            let updatePos = ()=>{
-                posX = e.pageX-dragTarget.offsetWidth/2;
-                posY = e.pageY-game.offsetHeight-dragTarget.offsetHeight+50; //50 is the select anim
-                dragTarget.style.transform = `translate(${posX}px, ${posY}px)`;
+            let rect = dragTarget.getBoundingClientRect();
+            document.getElementById('x').value = rect.left;
+            document.getElementById('y').value = rect.top;
+            dragTarget.style.transition = 'top 0s, left 0s, flex 1s';
+            DRAG_START = {
+                mousePos: {x: e.clientX, y: e.clientY},
+                pos: {x: dragTarget.getBoundingClientRect().x, y: dragTarget.getBoundingClientRect().y}//TODO CALC SELECT OFFSET
             }
-            updatePos(); 
+            let startSlot= e.target.closest('.hand'); //TODO CREATE CLASS CALLED SLOT
+            //REMEMBER ORIGIN POS OR CHILD SLOT?
+            dragTarget.style.position = 'fixed';
+            game.appendChild(dragTarget); //REMOVES FROM PARENT DIV TO GAME //NEVER UNAPPEND?
             let onDrag = (e)=>{
-                posX = e.pageX-dragTarget.offsetWidth/2; //250 //750
-                posY = e.pageY-game.offsetHeight-dragTarget.offsetHeight+50; //50 is the select anim
-                dragTarget.style.transform = `translate(${posX}px, ${posY}px)`;
-                //debug
-                let rect = dragTarget.getBoundingClientRect();
-                document.getElementById('x').value = rect.left;
-                document.getElementById('y').value = rect.top;
+                let dragDist = {x: e.clientX-DRAG_START.mousePos.x, y: e.clientY-DRAG_START.mousePos.y}
+                let targetPosY = `${DRAG_START.pos.y + dragDist.y}px`//for abs pos- game.getBoundingClientRect().y
+                let targetPosX = `${DRAG_START.pos.x + dragDist.x}px`//for abs pos - game.getBoundingClientRect().x
+                //dragTarget.style.transform = `translate(${targetPosX},${targetPosY})`;
+                dragTarget.style.top = targetPosY;
+                dragTarget.style.left = targetPosX;
             }
+            onDrag(e);
             document.addEventListener('mousemove', onDrag);
-            document.addEventListener('mouseup', e=>{
-                // dragTarget.style.position = 'relative';
-                document.removeEventListener('mousemove', onDrag)
-           });
+            document.addEventListener('mouseup', mouseUpEvent);
+            function mouseUpEvent(e){
+                //IF CARD IS WITHIN FLEX BOUNDARIES
+                //ELSE MOVES BACK TO WHERE THE CARD WAS
+                document.removeEventListener('mousemove', onDrag);
+                dragTarget.style.top = `${DRAG_START.pos.y}px`; //MOVE TO BACK START POSITION
+                dragTarget.style.left =`${DRAG_START.pos.x}px`;//MOVE TO BACK START POSITION
+                dragTarget.style.transition = 'top 1s, left 1s, flex 1s';
+                dragTarget.addEventListener('transitionend', endTransistion);// { once: true }IS THIS SHIT EVERN WORKING?
+           }
+            function endTransistion(transistionEvent){
+                if(transistionEvent.propertyName !== 'left') return;
+                dragTarget.style.top = `${0}px`;//MOVE TO BACK START POSITION, TODO CALC OFFSET IN HAND
+                dragTarget.style.left =`${0}px`;//MOVE TO BACK START POSITION, TODO CALC OFFSET IN HAND
+                startSlot.appendChild(dragTarget);
+                dragTarget.style.position = 'relative';
+                console.log('END TRANSITION');
+                document.removeEventListener('mouseup', mouseUpEvent);
+            }
         }
     }
+    //
+    //UTIL
+    //
     function getRandomFromArr(arr){
         let i = Math.floor(Math.random() * arr.length);
         return arr[i];
     }
-
 </script>
 <style>
     :root{/*dark theme*/
@@ -168,10 +171,18 @@
     .suit{/*CONSISTENT EMOJI FONT FOR ALL PLATFORMS?*/
         font-family: "Segoe UI Emoji";
     }
+    #game {
+        position: relative; /* basis for cards which are outside of #hand */
+    }
     #game .hand{
         outline: rgb(189, 255, 8) 3px solid;
         display: flex;
+
         justify-content: center;
+        align-items: center;
+        align-content: center;
+        align-self: center;
+
         box-sizing:border-box;
         height: 350px;
         margin-top: 10%;/*HAND AT THE BOTTOM*/
@@ -181,16 +192,40 @@
     /*} */
     #game .hand .outer-card:not(:active){
         /*FOR CARD HAND EFFECT*/
-        margin-right: -95px;
-        margin-left: -95px;
+        /* margin-right: -95px;
+        margin-left: -95px; */
+        transition: flex-grow 1s;
     }
-    #game .outer-card:hover{ /*ON MOUSE HOVER SELECT PULL OUT CARD*/
+    #game .outer-card:hover .inner-card{ /*ON MOUSE HOVER SELECT PULL OUT CARD*/
         margin-top: -50px;
     }
+    #game .outer-card:active .inner-card{ /*ON MOUSE DOWN REVERSE THE SELECT ANIMATION*/
+        margin-top: 0px;
+    }
+    /* #game .outer-card:hover .inner-card{ /*ON MOUSE HOVER SELECT PULL OUT CARD*/
+        /*transform: translateY(-50px); /* do not move card pos which is also dragged */
+    /*} */
     #game .flippable:active{ /*ON MOUSE DOWN FLIPPING CARD ANIMATION*/
-        transform: rotateY(180deg);
+        transform: rotateY(180deg); /*FLIPS WHEN CARD IS DRAG OUT OF HAND*/
         z-index: 5;
         margin: 0px;
+    }
+    #game .outer-card{
+        /*ANIMATION*/
+        /*transform 0.5s; non-flips*/
+        /*CARD SIZE*/
+        width:250px;
+        height:350px;
+        /* display: inline-block; *//*TEST NEW HAND ALTERNATIVE*/
+        /*margin-right: -200px; TEST NEW HAND ALTERNATIVE*/
+    }
+    #game .inner-card{/*inner*/
+        /*ANIMATION*/
+        transition: transform 0.5s, margin-top 0.3s; /*flips*/
+        position: relative;
+        transform-style: preserve-3d;
+        width: inherit;
+        height: inherit;
     }
     .front-face, .back-face{
         width:inherit;
@@ -203,22 +238,6 @@
         box-sizing: border-box; /*MAKES BORDER STARTS IN BOX, RATHER OUTSIDE BOX*/
         border-radius: 5%;
         box-shadow:-2px 0px 15px rgba(0, 0, 0, 0.741);
-    }
-    #game .outer-card{
-        /*ANIMATION*/
-        transition: margin-top 0.3s; /*non-flips*/
-        /*CARD SIZE*/
-        width:250px;
-        height:350px;
-    }
-    #game .inner-card{/*inner*/
-        /*ANIMATION*/
-        transition: transform 0.5s; /*flips*/
-        position: relative;
-        transform-style: preserve-3d;
-
-        width: inherit;
-        height: inherit;
     }
     #game .inner-card>.back-face{/*STYLES FOR CARD BACK*/
         transform: rotateY(180deg);
