@@ -148,22 +148,23 @@
                 dragTarget.style.transition = 'top 1s, left 1s, margin 1s';
                 dragTarget.classList.remove('dragging');
                 document.removeEventListener('mousemove', onDrag);
-                // if(activeSlot !== null){//IF CARD IS WITHIN SLOT BOUNDARIES
-                //     console.log('INSIDE', activeSlot);
-                //     document.removeEventListener('mouseup', mouseUpEvent);
-                //     //THIS IS NOT WORKING TODO
-                //     let targetSibling = getSlotInsertPosition(event.clientX, activeSlot);
-                //     startSlot.insertBefore(dragTarget, targetSibling);
-                //     dragTarget.style.position = 'relative';
-                //     dragTarget.style.top = `${0}px`;//TEMP
-                //     dragTarget.style.left =`${0}px`;//TEMP
-                // }
-                //else{//ELSE MOVES BACK TO WHERE THE CARD WAS
+                let hoverSibling = null;
+                if (activeSlot !== null) hoverSibling = activeSlot.querySelector('.draggable:hover:not(.dragging)');
+                if(hoverSibling !== null){//IF CARD IS WITHIN SLOT BOUNDARIES
+                    console.log('INSIDE', activeSlot);
+                    //USE TRANSITIONEND AGAIN
+                    document.removeEventListener('mouseup', mouseUpEvent);
+                    startSlot.insertBefore(dragTarget, hoverSibling.nextSibling);
+                    dragTarget.style.position = 'relative';
+                    dragTarget.style.top = `${0}px`;//TEMP
+                    dragTarget.style.left =`${0}px`;//TEMP
+                }
+                else{//ELSE MOVES BACK TO WHERE THE CARD WAS
                     console.log('OUTSIDE');
                     dragTarget.style.top = `${DRAG_START.pos.y}px`; //MOVE TO BACK START POSITION
                     dragTarget.style.left =`${DRAG_START.pos.x}px`;//MOVE TO BACK START POSITION
                     dragTarget.addEventListener('transitionend', endTransistion);//{ once: true }IS THIS SHIT EVERN WORKING?
-                //}
+                }
             }
             function endTransistion(transistionEvent){
                 if(transistionEvent.propertyName !== 'left') return;
@@ -190,20 +191,21 @@
             }
         }
     }
-    function getSlotInsertPosition(mouseX, activeSlot){
-        let dragTarget = document.querySelector('.dragging');
-        if (dragTarget===null) return;
-        //get insertion position
-        let items = [...activeSlot.querySelectorAll('.draggable:not(.dragging)')];
-        let result = items.reduce((prev, current)=>{
-            let box = current.getBoundingClientRect();
-            let offset = mouseX - box.left - box.width/2;
-            if(offset < 0 && offset > prev.offset){
-                return {offset:offset, element: current}; //Remember the offset and potential result in iterator
-            } else {return prev};
-        }, { offset: Number.NEGATIVE_INFINITY}).element; //Second argument is for setting initial value
-        return result;
-    }
+    //FROM WEB DEV SIMPLIFIED TUTORIAL, NOT WORKING
+    // function getSlotInsertPosition(mouseX, activeSlot){
+    //     let dragTarget = document.querySelector('.dragging');
+    //     if (dragTarget===null) return;
+    //     //get insertion position
+    //     let items = [...activeSlot.querySelectorAll('.draggable:not(.dragging)')];
+    //     let result = items.reduce((prev, current)=>{
+    //         let box = current.getBoundingClientRect();
+    //         let offset = mouseX - box.left - box.width/2;
+    //         if(offset < 0 && offset > prev.offset){
+    //             return {offset:offset, element: current}; //Remember the offset and potential result in iterator
+    //         } else {return prev};
+    //     }, { offset: Number.NEGATIVE_INFINITY}).element; //Second argument is for setting initial value
+    //     return result;
+    // }
       
     
     //
@@ -227,7 +229,7 @@
     }
     #game .hand{
         outline: rgb(189, 255, 8) 3px solid;
-        /*display: flex;*/
+        display: flex;
 
         justify-content: center;
         align-items: center;
@@ -257,11 +259,13 @@
         pointer-events: none;
     }
     #game .hand .outer-card:hover{/*CARD IN HAND HOVER*/
-        margin-right: -100px;
+        margin-right: -50px;
+        margin-left: -50px;
     }
     #game .hand .outer-card:not(:active, :hover){ /*CARD IN HAND, NOT BEING DRAGGED
         /*FOR CARD HAND EFFECT*/
-        margin-right: -200px;
+        margin-right: -95px;
+        margin-left: -95px;
     }
     #game .outer-card:hover .inner-card{ /*ON MOUSE HOVER SELECT PULL OUT CARD*/
         margin-top: -50px;
