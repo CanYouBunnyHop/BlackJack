@@ -8,7 +8,7 @@
     X:<input type="text" id="x">  Y:<input type="text" id="y"> <br>
     mX:<input type="text" id="mx">  mY:<input type="text" id="my">
     <div id="game" style="user-select: none;">
-            <div class="outer-card draggable prototype">
+            <div class="outer-card draggable prototype" lock="false">
                 <div class="inner-card flippable">
                     <div class="front-face">
                         <span class="number top">A</span>
@@ -26,7 +26,16 @@
                     </div><!--end back-face-->
                 </div><!--end inner-card-->
             </div><!--end outer-card-->
-        <div class="hand slot" capacity=-1 lock=false></div>
+        <div class="hand slot" capacity=-1 lock=false>
+            <div class="draggable" lock="true" style=
+                "width: 200px;
+                height: 350px;
+                outline: green solid 2px;
+                visibility: visible;
+                display: inline-block;
+                "> <!--for inserting left most card-->
+            </div>
+        </div>
     </div><!--end #game-->
 <script type="text/javascript">
     var game = document.getElementById('game');
@@ -114,6 +123,7 @@
             e.stopPropagation();//
             //e.preventDefault();
             let dragTarget = e.target.closest('.draggable');
+            if(dragTarget.getAttribute('lock')==="true")return; //IF LOCKED RETURN
             dragTarget.classList.add('dragging'); //ADD DRAGGING CLASS FOR EASY ACCESS ELSE WHERE
             let rect = dragTarget.getBoundingClientRect();
             document.getElementById('x').value = rect.left;
@@ -138,7 +148,13 @@
                 let targetPosX = `${DRAG_START.pos.x + dragDist.x}px`
                 dragTarget.style.top = targetPosY;
                 dragTarget.style.left = targetPosX;
-                
+                //FOR COUNTER CARD SELCT ANANIMTION
+                // let activeSlot = game.querySelector('.active-slot');
+                // let underneathCard = activeSlot!==null? activeSlot.querySelector('.draggable:hover:not(.dragging) .inner-card') : null;
+                // if(underneathCard !== null){
+                //     underneathCard.style.marginTop = '0px';
+                //     console.log('set margin on hover');
+                // }
             }
             onDrag(e);
             document.addEventListener('mousemove', onDrag);
@@ -149,10 +165,11 @@
                 dragTarget.classList.remove('dragging');
                 document.removeEventListener('mousemove', onDrag);
                 let hoverSibling = null;
-                if (activeSlot !== null) hoverSibling = activeSlot.querySelector('.draggable:hover:not(.dragging)');
+                if (activeSlot !== null) 
+                    hoverSibling = activeSlot.querySelector('.draggable:hover:not(.dragging)');
                 if(hoverSibling !== null){//IF CARD IS WITHIN SLOT BOUNDARIES
                     console.log('INSIDE', activeSlot);
-                    //USE TRANSITIONEND AGAIN
+                    //USE TRANSITIONEND AGAIN?
                     document.removeEventListener('mouseup', mouseUpEvent);
                     startSlot.insertBefore(dragTarget, hoverSibling.nextSibling);
                     dragTarget.style.position = 'relative';
@@ -229,7 +246,7 @@
     }
     #game .hand{
         outline: rgb(189, 255, 8) 3px solid;
-        display: flex;
+        /* display: flex; */
 
         justify-content: center;
         align-items: center;
@@ -259,19 +276,16 @@
         pointer-events: none;
     }
     #game .hand .outer-card:hover{/*CARD IN HAND HOVER*/
-        margin-right: -50px;
-        margin-left: -50px;
+        margin-right: -100px;
+        /* margin-left: -50px; */
     }
     #game .hand .outer-card:not(:active, :hover){ /*CARD IN HAND, NOT BEING DRAGGED
         /*FOR CARD HAND EFFECT*/
-        margin-right: -95px;
-        margin-left: -95px;
+        margin-right: -200px;
+        /* margin-left: -95px; */
     }
-    #game .outer-card:hover .inner-card{ /*ON MOUSE HOVER SELECT PULL OUT CARD*/
+    #game .outer-card:hover:not(:active) .inner-card{/*ON MOUSE HOVER, NOT ACTIVE SELECT PULL OUT CARD*/
         margin-top: -50px;
-    }
-    #game .outer-card:active .inner-card{ /*ON MOUSE DOWN REVERSE THE SELECT ANIMATION*/
-        margin-top: 0px;
     }
     #game .flippable:active{ /*ON MOUSE DOWN FLIPPING CARD ANIMATION*/
         transform: rotateY(180deg); /*FLIPS WHEN CARD IS DRAG OUT OF HAND*/
