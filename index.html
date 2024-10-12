@@ -182,14 +182,13 @@
                 SLOT: _startSlot,
                 startRightSibling: getNeighborElementsInParent(DRAG_TARGET, _startSlot).rightNextdoor
             };
-            if(DRAG_START.startRightSibling){
-                DRAG_START.startRightSibling.style.transition = 'left 0s, top 0s, margin 0s';
-                DRAG_START.startRightSibling.style.marginLeft = '50px';
-                setTimeout(()=>{
-                    DRAG_START.startRightSibling.style.transition = 'left 0s, top 0s, margin 1s';
-                    DRAG_START.startRightSibling.style.marginLeft = '0px'
-                },1);
-            }
+            //BREAKS TRANSITION , SINCE THEY ARE GETTING BOUNDING BOX IN MID TRANSITION
+            // if(DRAG_START.startRightSibling){ 
+            //     DRAG_START.startRightSibling.style.transition = 'left 0s, top 0s, margin 0s';
+            //     DRAG_START.startRightSibling.style.marginLeft = '50px';
+            //     //RESET ON RELEASE
+            // }
+            DRAG_TARGET.style.marginLeft = '0px';
             document.addEventListener('mousemove', onDrag);
             document.addEventListener('mouseup', releaseDrag);
             DRAG_TARGET.style.position = 'fixed';
@@ -216,6 +215,10 @@
             function releaseDrag(releaseEvent){
                 const RELEASE_STATE = {LEFT_MOST: 0, MIDDLE: 1, RIGHT_MOST: 2, NONE: 3};
 
+                //BREAKS TRANSITION , SINCE THEY ARE GETTING BOUNDING BOX IN MID TRANSITION
+                // DRAG_START.startRightSibling.style.transition = 'left 0s, top 0s, margin 1s';
+                // DRAG_START.startRightSibling.style.marginLeft = '0px'
+
                 ///////////////////////////////////////////////////////////
                 //set game attribute, remove dragging class, set transition
                 game.setAttribute('drag-active', false);//FOR CSS TO USE THE RIGHT STYLES
@@ -240,8 +243,8 @@
                     return RELEASE_STATE.RIGHT_MOST;
                 })();//Immediate Invoke ENDS
                 let _targetPos = {}; //ENDING POSITION
-                switch (releaseState){
-                    case RELEASE_STATE.NONE: //use original
+                switch (releaseState){ //BREAKS TRANSITION , SINCE THEY ARE GETTING BOUNDING BOX IN MID TRANSITION
+                    case RELEASE_STATE.NONE:
                         _targetPos = {
                             x: DRAG_START.POS.x, 
                             y: DRAG_START.POS.y, 
@@ -270,7 +273,7 @@
                     case RELEASE_STATE.RIGHT_MOST:
                         var targetRect = ACTIVE_SLOT.RIGHT_MOST_SIBLING.getBoundingClientRect();
                         _targetPos = {
-                            x: targetRect.left + 50,
+                            x: targetRect.left + 50,  
                             y: ACTIVE_SLOT.SLOT.getBoundingClientRect().top,
                             rightSibling : getNeighborElementsInParent(ACTIVE_SLOT.RIGHT_MOST_SIBLING, ACTIVE_SLOT.SLOT).rightNextdoor,
                             leftSibling : ACTIVE_SLOT.RIGHT_MOST_SIBLING
@@ -280,7 +283,8 @@
                 //TODO: get value from css? apply + or - 50px
                 //1s being the standard anim speed
                 //OFFSET TARGETPOS.LEFTSIBLING'S MARGIN TO MAKE SPACE FOR CARD
-                if(TARGET_POS.leftSibling && TARGET_POS.leftSibling !== ACTIVE_SLOT.HOVERED_SIBLING){//TARGET_POS.leftSibling !== ACTIVE_SLOT.HOVERED_SIBLING){//not left most
+                //TARGET_POS.leftSibling !== ACTIVE_SLOT.HOVERED_SIBLING){//not left most
+                if(TARGET_POS.leftSibling && TARGET_POS.leftSibling !== ACTIVE_SLOT.LEFT_MOST_SIBLING){
                     TARGET_POS.leftSibling.marginRight = '-200px';
                 }
                 //APPLY MARGIN LEFT TO TARGET_POS.rightSibling TO MAKE SPACE FOR CARD
