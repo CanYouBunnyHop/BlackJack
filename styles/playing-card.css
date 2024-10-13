@@ -1,0 +1,148 @@
+    /*
+    **
+    **
+    ** THIS STYLE IS USED FOR STYLING STANDARD CARD GAMES
+    ** 
+    ** rn using for black jack, probably need to rework if adding new games
+    */
+    #game .suit{font-family: "Segoe UI Emoji";} /*CONSISTENT EMOJI?, Doesn't really work*/
+    #game {position: relative; /* basis for cards which are outside of #hand */
+        /*custom css properties*/
+        --card-scale : 10;
+        --card-width : calc(25px * var(--card-scale));
+        --card-height : calc(35px * var(--card-scale));
+
+        --suit-middle-size : calc(3pt * var(--card-scale));
+        --suit-corner-size : calc(2pt * var(--card-scale));
+        --number-size: calc(3.5pt * var(--card-scale));
+
+        --hand-card-offset : calc(-20px * var(--card-scale));
+
+        --anim-select-dist : calc(-5px * var(--card-scale));
+        --anim-insert-dist : calc(-10px * var(--card-scale)); 
+        
+        --anim-time-scale : 1;
+        --anim-flippable-time : calc(.5s * var(--anim-time-scale));
+        --anim-select-time : calc(.3s * var(--anim-time-scale));
+        --anim-move-time : calc(1s * var(--anim-time-scale));
+
+        --anim-flippable-transition: transform var(--anim-flippable-time);
+        --anim-select-transition : margin-top var(--anim-select-time);
+        
+        --anim-move-initial-transition : left var(--anim-move-time), right var(--anim-move-time), margin var(--anim-move-time);
+    }
+    #game .slot-start{width: var(--card-width);height: var(--card-height);
+        margin-right: 0px;
+        outline: green solid 2px;
+        visibility: visible;
+        display: inline-block;
+    }
+    #game .hand{width:100%; height: var(--card-height);
+        outline: rgb(189, 255, 8) 3px solid;/*Debug*/
+        justify-content: center;/* align-items: center; *//* align-content: center; */
+        align-self: center; /*THIS IS IMPORTANT*/
+        align-items: center;
+        /*HAND ANCHOR TO BOTTOM*/
+        /* bottom: 0px; position: fixed; */
+    }
+    #game .outer-card{
+        /*SET CARD SIZE*/width: var(--card-width); height: var(--card-height);
+        transition: var(--anim-move-initial-transition);/*FOR INITIALIZATION, TRANSITION IS HANDLED IN JS*/
+        display: inline-block; /*TEST NEW HAND ALTERNATIVE*/
+        white-space: nowrap; /*KEEP CARDS ON THE SAME ROW, Doesn't work*/
+    }
+    #game .dragging{pointer-events: NONE !important;} /*READ MOUSE EVENT UNDER THE DRAGGABLE*/
+    #game[drag-active='true'] .hand .outer-card:hover{/* INSERTION ANIM */
+        margin-right: var(--anim-insert-dist) !important;
+    } 
+    #game .hand .outer-card{margin-right: var(--hand-card-offset);}/*CARD IN HAND EFFECT*/
+    /*.disable-hover-anim is given when mouse is released*/
+    #game .outer-card:not(.disable-hover-anim):hover .inner-card{/*MOUSE HOVER, DO SELECT ANIMATION*/
+        transition: var(--anim-flippable-transition), margin-top var(--anim-select-time) !important;
+        margin-top: var(--anim-select-dist) !important;
+    }
+    #game .outer-card:active .inner-card{/*MOUSE ACTIVE, KEEP SELECT ANIMATION*/
+        transition: var(--anim-flippable-transition), margin-top 0s;
+        margin-top: var(--anim-select-dist) !important;
+    }
+    #game .inner-card{/*inner*/
+        /*ANIMATION*/
+        transition: var(--anim-flippable-transition), var(--anim-select-transition) !important; /*flips*/
+        position: relative;
+        transform-style: preserve-3d;
+        width: inherit;
+        height: inherit;
+    }
+    .front-face, .back-face{width:inherit; height:inherit;
+        position: absolute;/*MAKES POSITION STAYS IN PLACE RELATIVE TO PARENT*/
+        backface-visibility: hidden;
+        text-align: center;
+        perspective: 4000px; /*DETERMINES FORESHORTENING*/
+        box-sizing: border-box; /*MAKES BORDER STARTS IN BOX, RATHER OUTSIDE BOX*/
+        border-radius: 5%;
+        box-shadow:-2px 0px 15px rgba(0, 0, 0, 0.741);
+    }
+    #game .outer-card .back-face{/*STYLES FOR CARD BACK*/
+        transform: rotateY(180deg);
+        border: 15px solid whitesmoke;
+        background-color: whitesmoke;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    #game .card-back-display{width: 100%; height: 100%;
+        background-color: rgb(34, 48, 118);
+        color: whitesmoke;
+        
+        border-radius: 5%;
+    }
+    #game .outer-card .front-face{
+        background-color: whitesmoke;
+        display: grid;
+        grid-template-rows: repeat(3, 1fr) repeat(2, 3.5fr) repeat(3, 1fr);
+        grid-template-columns: 1fr 4fr 1fr;
+        text-align: center;
+    }
+    #game .card-front-display{width: 100%; height: 100%;
+        grid-row: 2/8;
+        grid-column: 2/3;
+        /*background-color: rgba(137, 43, 226, 0.201); DEBUG*/
+        justify-content: center;
+        display: flex;
+        flex-direction: row;
+        grid-template-rows: repeat(8, 1fr);
+        grid-template-columns: repeat(3, 1fr);
+    }
+    #game .card-front-display .column{/*PARENT OF middle SUIT*/
+        flex: 1; /*keep column size equal*/
+        display: flex; /*suits are flex items*/
+        flex-direction: column;
+        align-items: center;
+        justify-content: center; /*PUT CHILD ELEMENT IN VERTICAL CENTER*/
+        outline: red solid 1px;
+    }
+    #game .card-front-display .column .suit{/*DISPLAYED middle SUITS*/
+        font-size : var(--suit-middle-size); /*SUIT SIZE*/
+        position: relative;
+        flex : 0 !important;
+        display: block;
+        margin: auto;
+    }
+    #game .card-front-display .column:not([POS='MIDDLE']) :first-child{margin-top: 0%;}
+    #game .card-front-display .column:not([POS='MIDDLE']) :last-child{margin-bottom: 0%;}
+    /*SET ROTATIONS AND POSITION TO THE CORNER ELEMENTS*/
+    #game .inner-card [CORNER~='TOP']{transform: rotateX(0deg);}
+    #game .inner-card [CORNER~='BOT']{transform: rotateX(180deg);}
+    #game .inner-card .suit[CORNER='TOP']{grid-row: 3/4; grid-column: 1/2;}
+    #game .inner-card .suit[CORNER='BOT']{grid-row: 5/6; grid-column: 3/4;}
+    #game .inner-card .suit[CORNER]{font-size : var(--suit-corner-size);} /*Set size on corner suits*/
+    
+    #game .inner-card .number{width: 100%; height: 100%;
+        outline: red solid 1px;
+        font-size : var(--number-size);
+        letter-spacing:-0.5rem; margin-left:-0.3rem;
+        text-align: center; font-weight: bold; display: block;
+    }
+    #game .inner-card .number[CORNER='TOP']{grid-row: 1/3;grid-column: 1/2;}
+    #game .inner-card .number[CORNER='BOT']{grid-row: 6/8;grid-column: 3/4;}
+    #game .prototype{display: NONE !important;}
