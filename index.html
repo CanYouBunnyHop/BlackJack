@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="styles/playing-card.css"> <!--Link to playing-card.css-->
     X:<input type="text" id="x">  Y:<input type="text" id="y"> <br>
     mX:<input type="text" id="mx">  mY:<input type="text" id="my"> <br>
-    <button type="button" onmousedown="popCardFromDeck()">Hit</button>
+    <button type="button" onmousedown="popCardFromDeck(event)">Hit</button>
     <div id="game" style="user-select: NONE;">
             <div class="outer-card draggable prototype" lock="false">
                 <div class="inner-card flippable">
@@ -30,8 +30,12 @@
                 </div><!--end inner-card-->
             </div><!--end outer-card-->
         <div class="hand slot" capacity=-1 lock=false id="player-hand">
-            <div class="slot-start draggable" lock="true"> <!--for inserting left most card-->
-            </div>
+            <div class="slot-start draggable" lock="true"></div> <!--for inserting left most card-->
+        </div><!--end hand-->
+        <div class="deck" onmousedown="popCardFromDeck()">
+            <div class="back-face"> a
+                <span class="card-back-display" style="pointer-events: none;">CARD</span>
+            </div><!--end back-face-->
         </div>
     </div><!--end #game-->
 <script type="text/javascript" src="JS/playing-card-game.js" defer></script>
