@@ -123,6 +123,14 @@ const __CARD_WIDTH = CARD_STYLE.__card_width,
     __ANIM_MOVE_TIME = CARD_STYLE.__anim_move_time,
     __ANIM_MOVE_INITIAL_TRANSITION = CARD_STYLE.RAW__anim_move_initial_transition;
 function setDraggableLogic(element){element.addEventListener('mousedown', startDrag);}
+//
+//
+//
+//BUG, WHEN DRAGSTART IS FIRSTCARD, INSERTING LEFT MOST, MOVE POSITION IS 1 HANDCARD WIDTH TOO MUCH
+//
+//
+//
+//
 function startDrag(startEvent){ //MOUSE DOWN EVENT
     const DRAG_TARGET = startEvent.target.closest('.draggable');
     if(DRAG_TARGET.getAttribute('lock') === "true") return; //IF LOCKED RETURN
