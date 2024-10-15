@@ -154,7 +154,7 @@ function startDrag(startEvent){ //MOUSE DOWN EVENT
     //
     //
     const HAND_CARD_WIDTH = __CARD_WIDTH + __HAND_CARD_OFFSET;
-    let dragStartWasFirstCard = [...DRAG_START.slot.children].indexOf(DRAG_START.startRightSibling)!==2
+    let dragStartWasFirstCard = DRAG_START.index===1;//[...DRAG_START.slot.children].indexOf(DRAG_START.startRightSibling)!==2
     let applyInsertMarginOffset = DRAG_START.startRightSibling //&& [...DRAG_START.slot.children].indexOf(DRAG_START.startRightSibling)!==2
     if(applyInsertMarginOffset){
         DRAG_START.startRightSibling.style.transition = `${__ANIM_MOVE_INITIAL_TRANSITION}, margin 0s`; //override margin
@@ -202,6 +202,7 @@ function startDrag(startEvent){ //MOUSE DOWN EVENT
         ///////////////////////////////////////////////////////////
         document.removeEventListener('mousemove', onDrag);
         let _activeSlot = game.querySelector('.active-slot') ?? DRAG_START.slot;
+        const SAME_SLOT = _activeSlot === DRAG_START.slot;
         const ACTIVE_SLOT = {
             slot: _activeSlot,
             hoveredSibling :  _activeSlot ? _activeSlot.querySelector('.draggable:hover:not(.dragging)'): null,
@@ -215,8 +216,8 @@ function startDrag(startEvent){ //MOUSE DOWN EVENT
             return RELEASE_STATE.RIGHT_MOST;
         })();//Immediate Invoke ENDS
         
-        let _targetPos = {}; //__ENDING POSITION
-        switch (releaseState){ //BREAKS TRANSITION , SINCE THEY ARE GETTING BOUNDING BOX IN MID TRANSITION
+        let _targetPos = {};
+        switch (releaseState){
             case RELEASE_STATE.NONE:
                 _targetPos = {
                     x: DRAG_START.pos.x,
@@ -265,15 +266,15 @@ function startDrag(startEvent){ //MOUSE DOWN EVENT
         }
         //CHECK IF STARTRIGHTSIBLING INDEX IS LATER OR EQUAL TO TARGET HOVER SIBLING
         let _activeSlotChildren = [...ACTIVE_SLOT.slot.children]
-        let _offsetA = 
-            DRAG_START.startRightSibling && 
-            (_activeSlotChildren.indexOf(TARGET_POS.leftSibling)>=
-            DRAG_START.index)? -__ANIM_INSERT_DIST:0;
-        let _offsetB = !dragStartWasFirstCard ? -HAND_CARD_WIDTH:0;
-        let totalXOffset = _offsetA + _offsetB;
+        let _offset = 0;
+        let _targetLeftSibIndex = _activeSlotChildren.indexOf(TARGET_POS.leftSibling)
+        if(_targetLeftSibIndex >=DRAG_START.index && dragStartWasFirstCard)
+            _offset = - __ANIM_INSERT_DIST; //--double negative here, becomes potitive
+        else if(_targetLeftSibIndex >= DRAG_START.index && !dragStartWasFirstCard )//is dragStart is not first, and target pos index is dragstart
+            _offset = HAND_CARD_WIDTH;
         //GO TO TARGET POSITION
         setTimeout(()=>{
-            DRAG_TARGET.style.left =`${TARGET_POS.x - totalXOffset}px`;
+            DRAG_TARGET.style.left =`${TARGET_POS.x - _offset}px`;
             DRAG_TARGET.style.top = `${TARGET_POS.y}px`;
         },1);
         document.removeEventListener('mouseup', releaseDrag);
