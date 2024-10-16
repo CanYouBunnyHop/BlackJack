@@ -8,10 +8,10 @@
     #game .suit{font-family: "Segoe UI Emoji";} /*CONSISTENT EMOJI?, Doesn't really work*/
     #game {position: relative; /* basis for cards which are outside of #hand */
         /*custom css properties*/
-        --card-scale : 8;
+        --card-scale : 6;
         --card-width : calc(25px * var(--card-scale));
         --card-height : calc(35px * var(--card-scale));
-        --start-slot-width: 33%;
+        --start-slot-width: 20%;
 
         --suit-middle-size : calc(0.25rem * var(--card-scale));
         --suit-corner-size : calc(0.18rem * var(--card-scale));
@@ -34,16 +34,22 @@
     }
     #game .deck{width:var(--card-width); height: var(--card-height);
         /*DECK ANCHOR TO TOP RIGHT*/
-        top: 5%; right: 5%; position: fixed;
+        top: calc(50% - var(--card-height)/2); right: 2%; position: fixed;
         outline: rgb(189, 255, 8) 3px solid;/*Debug*/
     }
+    #game #player-hand{
+         /*HAND ANCHOR TO BOTTOM*/
+         bottom: 0px; position: fixed; margin-bottom: 2%;
+    }
+    #game #dealer-hand{
+        /*HAND ANCHOR TO BOTTOM*/
+        top: 0px; position: fixed; margin-top: 2%;
+   }
     #game .hand{width:100%; height: var(--card-height);
         outline: rgb(189, 255, 8) 3px solid;/*Debug*/
         justify-content: center;/* align-items: center; *//* align-content: center; */
         align-self: center; /*THIS IS IMPORTANT*/
         align-items: center;
-        /*HAND ANCHOR TO BOTTOM*/
-        bottom: 0px; position: fixed;
     }
     #game .slot-start{width: var(--start-slot-width);height: var(--card-height);
         margin-right: 0px;
@@ -58,9 +64,12 @@
         white-space: nowrap; /*KEEP CARDS ON THE SAME ROW, Doesn't work*/
     }
     #game .dragging{
-        pointer-events: NONE !important;
+        pointer-events: NONE !important; /*READ MOUSE EVENT UNDER THE DRAGGABLE*/
         margin-bottom: 50px;
-    } /*READ MOUSE EVENT UNDER THE DRAGGABLE*/
+    }
+    #game .dragging:active .inner-card{
+        transform: rotateY(180deg);
+    }
     #game[drag-active='true'] .hand .outer-card:hover{/* INSERTION ANIM */
         margin-right: var(--anim-insert-dist) !important;
     } 

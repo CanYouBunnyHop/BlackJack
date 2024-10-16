@@ -7,9 +7,9 @@
 </head>
 <link rel="stylesheet" href="styles/dark-theme.css">
 <link rel="stylesheet" href="styles/playing-card.css"> <!--Link to playing-card.css-->
-    X:<input type="text" id="x">  Y:<input type="text" id="y"> <br>
+    <!-- X:<input type="text" id="x">  Y:<input type="text" id="y"> <br>
     mX:<input type="text" id="mx">  mY:<input type="text" id="my"> <br>
-    <button type="button" onmousedown="popCardFromDeck(event)">Hit</button>
+    <button type="button" onmousedown="popCardFromDeck(event)">Hit</button> -->
     <div id="game" style="user-select: NONE;">
             <div class="outer-card draggable prototype" lock="false">
                 <div class="inner-card flippable">
@@ -29,6 +29,9 @@
                     </div><!--end back-face-->
                 </div><!--end inner-card-->
             </div><!--end outer-card-->
+        <div class="hand slot" capacity=-1 lock=false id="dealer-hand">
+            <div class="slot-start draggable" lock="true"></div> <!--for inserting left most card-->
+        </div><!--end dealer-hand-->
         <div class="hand slot" capacity=-1 lock=false id="player-hand">
             <div class="slot-start draggable" lock="true"></div> <!--for inserting left most card-->
         </div><!--end hand-->
