@@ -160,9 +160,13 @@ function draggableLogic(startEvent){ //MOUSE DOWN EVENT
     const HAND_CARD_WIDTH = __CARD_WIDTH + __HAND_CARD_OFFSET;
     let dragTargetWas1st = START_POS.index===1;
     if(START_POS.sibR){//If start sibR exist, apply hand-card width Margin Offset
-        START_POS.sibR.style.transition = `margin 0s`; //override margin
-        START_POS.sibR.style.marginLeft = `${HAND_CARD_WIDTH}px`;
-        setTimeout(()=>{START_POS.sibR.style.transition = `${__ANIM_MOVE_INITIAL_TRANSITION}`;}, 1);
+        playTransition(START_POS.sibR, 'margin 0s', 
+            [new PropValPair('marginLeft',`${HAND_CARD_WIDTH}px`)],
+            ()=>{START_POS.sibR.style.transition = `${__ANIM_MOVE_INITIAL_TRANSITION}`;}
+        );
+        // START_POS.sibR.style.transition = `margin 0s`; //override margin
+        // START_POS.sibR.style.marginLeft = `${HAND_CARD_WIDTH}px`;
+        // requestAnimationFrame(()=>{setTimeout(()=>{START_POS.sibR.style.transition = `${__ANIM_MOVE_INITIAL_TRANSITION}`}}, 1));
     }
     document.addEventListener('mousemove', onDrag);
     document.addEventListener('mouseup', releaseDrag);
@@ -267,10 +271,12 @@ function draggableLogic(startEvent){ //MOUSE DOWN EVENT
             return 0;
         })(); //End Immediate Invoke
         //GO TO TARGET POSITION
-        setTimeout(()=>{
-            DRAG_TARGET.style.left =`${TARGET_POS.x - sameSlotOffset}px`;
-            DRAG_TARGET.style.top = `${TARGET_POS.y}px`;
-        },1);
+        requestAnimationFrame(()=>{
+            setTimeout(()=>{
+                DRAG_TARGET.style.left =`${TARGET_POS.x - sameSlotOffset}px`;
+                DRAG_TARGET.style.top = `${TARGET_POS.y}px`;
+            },1)
+        });
         document.removeEventListener('mouseup', releaseDrag);
         //Using timeout instead of event because event is buggy with spam clicks;
         requestAnimationFrame(()=>{setTimeout(endTransistion, (1000*__ANIM_MOVE_TIME))});
@@ -385,8 +391,10 @@ function playTransition(targetElement, initTransition='', styleProperties=[{prop
     styleProperties.forEach(propValPair => {
         targetElement.style[propValPair.prop] = propValPair.val;
     });
-    setTimeout(()=>{
-        if(endTransition !== (undefined||null)) targetElement.style.transition = endTransition;
-        endCallback();
-    }, 1);
+    requestAnimationFrame(()=>{
+        setTimeout(()=>{
+            if(endTransition !== (undefined||null)) targetElement.style.transition = endTransition;
+            endCallback();
+        }, 1)
+    });
 }
