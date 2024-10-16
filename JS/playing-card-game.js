@@ -197,7 +197,9 @@ function draggableLogic(startEvent){ //MOUSE DOWN EVENT
             lastChild: _targetSlot ? _targetSlot.lastElementChild : null,
         }
         let releaseState = (()=>{ //Immediate Invoke, get releaseState
-            if(_targetSlot === START_POS.slot && TARGET_SLOT.hoverSib === null) 
+            let _lastChildRect = TARGET_SLOT.lastChild.getBoundingClientRect();
+            let isFurtherThanLastRect = _releaseEvent.pageX > _lastChildRect.left;
+            if(TARGET_SLOT.slot === START_POS.slot && TARGET_SLOT.hoverSib === null && !isFurtherThanLastRect) 
                 return RELEASE_STATE.NONE;
             if(TARGET_SLOT.hoverSib && TARGET_SLOT.hoverSib === TARGET_SLOT.firstChild)
                 return RELEASE_STATE.LEFT_MOST;
