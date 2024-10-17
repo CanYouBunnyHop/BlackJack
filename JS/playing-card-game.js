@@ -76,21 +76,7 @@ function resetCardGame(){
 //Event Listener Wrapper / Rename
 function setSlotLogic(element){element.addEventListener('mouseenter', slotLogic)}
 function setDraggableLogic(element){element.addEventListener('mousedown', draggableLogic);}
-//
-//
-//WHEN PAGE FINISH LOADING //PROBABLY WANT TO USE DEFERED ON THE SCRIPT INSTEAD
-window.onload = function(){
-    for(let i =0; i<5; i++){ //For testing
-        let randomCard = popRandomFromArr(currentDeck);
-        let cardEl = randomCard.createElement();
-        PLAYER_HAND.appendChild(cardEl);
-        setDraggableLogic(cardEl);
-    }
-    setAllElementWithLogic('.slot', 'mouseenter', slotLogic);
-};
-//
-//
-//
+
 const _cardStyle = getComputedStyle(GAME);
 const CARD_STYLE = {};
 const CARD_STYLE_PROPERTIES = {
@@ -127,13 +113,13 @@ const __CARD_WIDTH = CARD_STYLE.__card_width,
     __ANIM_MOVE_INITIAL_TRANSITION = CARD_STYLE.RAW__anim_move_initial_transition;
 //
 // DRAGGABLE RELATED LOGICS
-//
-function draggableLogic(startEvent){ //MOUSE DOWN EVENT 
+// BUG: targetpos.sibR.marginleft // not fixed
+function draggableLogic(startEvent){ //MOUSE DOWN EVENT
     const DRAG_TARGET = startEvent.target.closest('.draggable');
     function setDragging(boolean = true){
         GAME.setAttribute('drag-active', boolean);//FOR CSS TO USE THE RIGHT STYLES
         if(boolean){
-            DRAG_TARGET.classList.add('dragging');
+            requestAnimationFrame(()=>{DRAG_TARGET.classList.add('dragging')});//for flipping animation
             DRAG_TARGET.style.transition = `left 0s, top 0s, margin ${__ANIM_MOVE_TIME}s`;
         }else{
             DRAG_TARGET.classList.remove('dragging'); 
@@ -144,7 +130,6 @@ function draggableLogic(startEvent){ //MOUSE DOWN EVENT
     if(GAME.getAttribute('transitioning') === "true") return; //OPTIONAL
     let _startSlot = startEvent.target.closest('.slot');
     if(!_startSlot) return; //THIS PREVENT SPAM CLICK
-    setDragging(true);
     DRAG_TARGET.style.marginLeft = '0px';
     let _targetRect = DRAG_TARGET.getBoundingClientRect();
     let _targetNeighbors = getNeighborElsInParent(DRAG_TARGET, _startSlot);
@@ -162,21 +147,16 @@ function draggableLogic(startEvent){ //MOUSE DOWN EVENT
     if(START_POS.sibR){//If start sibR exist, apply hand-card width Margin Offset
         playTransition(START_POS.sibR, 'margin 0s', 
             [new PropValPair('marginLeft',`${HAND_CARD_WIDTH}px`)],
-            ()=>{START_POS.sibR.style.transition = `${__ANIM_MOVE_INITIAL_TRANSITION}`;}
+            `${__ANIM_MOVE_INITIAL_TRANSITION}`
         );
     }
     document.addEventListener('mousemove', onDrag);
     document.addEventListener('mouseup', releaseDrag);
     DRAG_TARGET.style.position = 'fixed';
-    //For css, disable hover animation
-    DRAG_TARGET.classList.add('disable-hover-anim');
-    //DRAG_TARGET.classList.add('over-slot');
-    GAME.appendChild(DRAG_TARGET);
+    DRAG_TARGET.classList.add('disable-hover-anim'); //For css, disable hover animation
+    GAME.appendChild(DRAG_TARGET); setDragging(true); 
     onDrag(startEvent);
     function onDrag(event){
-        // if(GAME.querySelector('.active-slot'))
-        //     DRAG_TARGET.classList.add('over-slot');
-        // else DRAG_TARGET.classList.remove('over-slot');
         let _mDeltaX = event.pageX - START_POS.mousePos.x;
         let _mDeltaY = event.pageY - START_POS.mousePos.y;
         let followPos = new Vector2(START_POS.x + _mDeltaX, START_POS.y + _mDeltaY);
@@ -190,10 +170,10 @@ function draggableLogic(startEvent){ //MOUSE DOWN EVENT
     } 
     function releaseDrag(_releaseEvent){
         const RELEASE_STATE = {NONE: "None", LEFT_MOST: "L", MIDDLE: "M", RIGHT_MOST: "R"};
-        //set GAME attribute, remove dragging class, set transition
-        setDragging(false);
+        setDragging(false); //set GAME attribute, remove dragging class, set transition
         document.removeEventListener('mousemove', onDrag);
-        let _targetSlot = GAME.querySelector('.active-slot') ?? START_POS.slot;
+        const ACTIVE_SLOT = GAME.querySelector('.active-slot');
+        let _targetSlot = ACTIVE_SLOT ?? START_POS.slot;
         const IS_SAME_SLOT = _targetSlot === START_POS.slot;
         const TARGET_SLOT = {
             slot: _targetSlot,
@@ -201,16 +181,18 @@ function draggableLogic(startEvent){ //MOUSE DOWN EVENT
             firstChild: _targetSlot ? _targetSlot.firstElementChild : null,
             lastChild: _targetSlot ? _targetSlot.lastElementChild : null,
         }
+        let _lastChildRect = TARGET_SLOT.lastChild.getBoundingClientRect();
         let releaseState = (()=>{ //Immediate Invoke, get releaseState
-            let _lastChildRect = TARGET_SLOT.lastChild.getBoundingClientRect();
-            let isFurtherThanLastRect = _releaseEvent.pageX > _lastChildRect.left;
-            if(TARGET_SLOT.slot === START_POS.slot && TARGET_SLOT.hoverSib === null && !isFurtherThanLastRect) 
+            let _isMouseRight = _releaseEvent.pageX > _lastChildRect.left;
+            let _isHovSibFirst = TARGET_SLOT.hoverSib ? TARGET_SLOT.hoverSib === TARGET_SLOT.firstChild : false;
+            let _isHovSibLast = TARGET_SLOT.hoverSib ? TARGET_SLOT.hoverSib === TARGET_SLOT.lastChild : false;
+            if((_isMouseRight || _isHovSibLast) && ACTIVE_SLOT) 
+                return RELEASE_STATE.RIGHT_MOST;
+            if(IS_SAME_SLOT && ! TARGET_SLOT.hoverSib)
                 return RELEASE_STATE.NONE;
-            if(TARGET_SLOT.hoverSib && TARGET_SLOT.hoverSib === TARGET_SLOT.firstChild)
+            if(_isHovSibFirst) 
                 return RELEASE_STATE.LEFT_MOST;
-            if(TARGET_SLOT.hoverSib && TARGET_SLOT.hoverSib !== TARGET_SLOT.lastChild)
-                return RELEASE_STATE.MIDDLE;
-            return RELEASE_STATE.RIGHT_MOST;
+            return RELEASE_STATE.MIDDLE;
         })();//Immediate Invoke ENDS
         console.log(releaseState) //DEBUG
         let _targetPos = {};
@@ -221,17 +203,15 @@ function draggableLogic(startEvent){ //MOUSE DOWN EVENT
                     y: START_POS.y,
                     sibL: [...START_POS.slot.children][START_POS.index-1],
                     sibR: [...START_POS.slot.children][START_POS.index],
-                };
-            break;
+                };break;
             case RELEASE_STATE.LEFT_MOST:
-                var targetRect = TARGET_SLOT.hoverSib.getBoundingClientRect();
+                var targetRect = TARGET_SLOT.firstChild.getBoundingClientRect();
                 _targetPos = {
                     x: targetRect.right + 3, //MAGIC NUMBER
                     y: TARGET_SLOT.slot.getBoundingClientRect().top,
-                    sibL: TARGET_SLOT.hoverSib,
-                    sibR: getNeighborElsInParent(TARGET_SLOT.hoverSib, TARGET_SLOT.slot).next,
-                };
-            break;
+                    sibL: TARGET_SLOT.firstChild,
+                    sibR: getNeighborElsInParent(TARGET_SLOT.firstChild, TARGET_SLOT.slot).next,
+                };break;
             case RELEASE_STATE.MIDDLE:
                 var targetRect = TARGET_SLOT.hoverSib.getBoundingClientRect();
                 _targetPos = {
@@ -239,65 +219,61 @@ function draggableLogic(startEvent){ //MOUSE DOWN EVENT
                     y: TARGET_SLOT.slot.getBoundingClientRect().top,
                     sibL : TARGET_SLOT.hoverSib,
                     sibR : getNeighborElsInParent(TARGET_SLOT.hoverSib, TARGET_SLOT.slot).next,
-                };
-            break;
+                };break;
             case RELEASE_STATE.RIGHT_MOST:
-                var targetRect = TARGET_SLOT.lastChild.getBoundingClientRect();
+                var targetRect = _lastChildRect; //Already defined above in state checking
+                let _isLastAlsoFirst = TARGET_SLOT.firstChild === TARGET_SLOT.lastChild;
                 _targetPos = {
-                    x: targetRect.left + HAND_CARD_WIDTH,
+                    //if right most is also left most, use left most position
+                    x: _isLastAlsoFirst? targetRect.right + 3 : targetRect.left + HAND_CARD_WIDTH,
                     y: TARGET_SLOT.slot.getBoundingClientRect().top,
                     sibL : TARGET_SLOT.lastChild,
                     sibR : getNeighborElsInParent(TARGET_SLOT.lastChild, TARGET_SLOT.slot).next,
-                };
-                if(TARGET_SLOT.lastChild === TARGET_SLOT.firstChild){
-                    _targetPos.x = targetRect.right + 3;
-                }
-            break;
+                };break;
         } const TARGET_POS = _targetPos;
-        //OFFSET TARGETPOS.LEFTSIBLING'S MARGIN RIGHT TO MAKE SPACE FOR INSERTION
-        if(TARGET_POS.sibL && TARGET_POS.sibL !== TARGET_SLOT.firstChild){
+        //Apply hand card offset if left sibling is a card, aka not first child
+        if(TARGET_POS.sibL && TARGET_POS.sibL !== TARGET_SLOT.firstChild) 
             TARGET_POS.sibL.marginRight = `${__HAND_CARD_OFFSET}px`;
-        } 
-        //APPLY MARGIN LEFT TO TARGET_POS.sibR TO MAKE SPACE FOR CARD
-        if(TARGET_POS.sibR) TARGET_POS.sibR.style.marginLeft = `${HAND_CARD_WIDTH}px`;
-        //ALSO IF INSERT POSITION IS SAME AS DRAGSTART'S
+        //Make space to card on the right, for insertion
+        if(TARGET_POS.sibR) 
+            TARGET_POS.sibR.style.marginLeft = `${HAND_CARD_WIDTH}px`;
+        //if target position's right sib is not the same as starting position's right sib, reset margin left
         if(START_POS.sibR && START_POS.sibR !== TARGET_POS.sibR)
-            START_POS.sibR.style.marginLeft = `0px`;
-        //CHECK IF STARTRIGHTSIBLING INDEX IS LATER OR EQUAL TO TARGET HOVER SIBLING
-        let _activeSlotChildren = [...TARGET_SLOT.slot.children];
-        let _targetSibLIndex = _activeSlotChildren.indexOf(TARGET_POS.sibL);
+            playTransition(START_POS.sibR,`${__ANIM_MOVE_INITIAL_TRANSITION}`, [new PropValPair('marginLeft', '0px')], undefined);
+        //Additional position offset applied if starting slot and target slot is the same
+        let _targetSibLIndex = [...TARGET_SLOT.slot.children].indexOf(TARGET_POS.sibL);
         let sameSlotOffset = (()=>{//Immediate Invoke
-            if(IS_SAME_SLOT && _targetSibLIndex >= START_POS.index)
+            if(IS_SAME_SLOT && _targetSibLIndex >= START_POS.index) //
                 return dragTargetWas1st ? - __ANIM_INSERT_DIST - HAND_CARD_WIDTH : HAND_CARD_WIDTH;
             return 0;
         })(); //End Immediate Invoke
         //GO TO TARGET POSITION
-        requestAnimationFrame(()=>{
-            setTimeout(()=>{
-                DRAG_TARGET.style.left =`${TARGET_POS.x - sameSlotOffset}px`;
-                DRAG_TARGET.style.top = `${TARGET_POS.y}px`;
-            },1)
-        });
+        DRAG_TARGET.style.left =`${TARGET_POS.x - sameSlotOffset}px`;
+        DRAG_TARGET.style.top = `${TARGET_POS.y}px`;
         document.removeEventListener('mouseup', releaseDrag);
         //Using timeout instead of event because event is buggy with spam clicks;
-        requestAnimationFrame(()=>{setTimeout(endTransistion, (1000*__ANIM_MOVE_TIME))});
+        setTimeout(endTransistion, (1000*__ANIM_MOVE_TIME));
         function endTransistion(){
-            DRAG_TARGET.setAttribute('hoveringOnSlot', null);
-            TARGET_SLOT.slot.insertBefore(DRAG_TARGET, TARGET_POS.sibR);
-            //Enable hover animation again
-            DRAG_TARGET.classList.remove('disable-hover-anim');
-            playTransition(DRAG_TARGET, undefined,[
-                new PropValPair('position', 'relative'),
-                new PropValPair('left', '0px'),
-                new PropValPair('top', '0px')], 
-                undefined, ()=>{GAME.setAttribute('transitioning', false)}
-            );
             //Reset Siblings margins
             [TARGET_POS.sibL, TARGET_POS.sibR].forEach(sib=>{if(sib){
-                playTransition(sib, 'margin 0s',
-                [new PropValPair('marginLeft','0px')],
-                `${__ANIM_MOVE_INITIAL_TRANSITION}`)};
+                sib.style.transition = 'margin 0s';
+                sib.style.marginLeft = '0px';
+                setTimeout(()=>{sib.style.transition = __ANIM_MOVE_INITIAL_TRANSITION},10); //fixes inconsistencies in ffox
+            }});
+            //This need to wait for the foreach loop to end
+            //Enable hover animation again
+            playTransition(DRAG_TARGET, 'undefined',[
+                new PropValPair('position', 'relative'),
+                new PropValPair('left', '0px'),
+                new PropValPair('top', '0px')],
+                `${__ANIM_MOVE_INITIAL_TRANSITION}`, ()=>{console.log('Append insert')}
+            );
+            TARGET_SLOT.slot.insertBefore(DRAG_TARGET, TARGET_POS.sibR);
+            requestAnimationFrame(()=>{
+                DRAG_TARGET.classList.remove('disable-hover-anim');
+                GAME.setAttribute('transitioning', false);
             });
+           
         } //END endTransistion
     }//END releaseDrag
 }//END draggableLogic
@@ -306,7 +282,27 @@ function slotLogic(event){
     slot.classList.add('active-slot');
     slot.addEventListener('mouseleave', _event=>{ slot.classList.remove('active-slot') });
 }
-function popCardFromDeck(){//TEST
+function popCardFromDeck(hand){//TEST
+    //pseudo code
+    //get hand's last child
+    //if last child is first child
+    //  offset 0
+    //else
+    //  offset -cardWidth + hand card space
+    //
+    //Get random card, create element, append to deck
+    //posiiton = fixed
+    //Card element start from deck position
+    //Go to last child left + offset
+    //Go to last child top
+    //
+    //after set timeout 1s 
+    //  reset positions to 0
+    //  style position = relative  
+    //  append child
+
+
+
     // const _deckRect = GAME.querySelector('.deck:hover').getBoundingClientRect();
     // const DECK_POS = new Vector2(_deckRect.left, _deckRect.top);
     
@@ -344,7 +340,21 @@ function popCardFromDeck(){//TEST
     //         newCard.style.position='relative';
     //     },1000);
 }
-
+//
+//
+//WHEN PAGE FINISH LOADING //PROBABLY WANT TO USE DEFERED ON THE SCRIPT INSTEAD
+window.onload = function(){
+    for(let i =0; i<5; i++){ //For testing
+        let randomCard = popRandomFromArr(currentDeck);
+        let cardEl = randomCard.createElement();
+        PLAYER_HAND.appendChild(cardEl);
+        setDraggableLogic(cardEl);
+    }
+    setAllElementWithLogic('.slot', 'mouseenter', slotLogic);
+};
+//
+//
+//
 //
 //BLACK JACK RELATED GAME LOGIC
 //
@@ -390,13 +400,11 @@ class PropValPair {
 }
 function playTransition(targetElement, initTransition='', styleProperties=[{prop:'', val:''}],  endTransition='', endCallback=()=>{}){
     if(initTransition !== (undefined||null)) targetElement.style.transition = initTransition;
-    styleProperties.forEach(propValPair => {
-        targetElement.style[propValPair.prop] = propValPair.val;
+    styleProperties.forEach(pVPair => {
+        targetElement.style[pVPair.prop] = pVPair.val;
     });
     requestAnimationFrame(()=>{
-        setTimeout(()=>{
-            if(endTransition !== (undefined||null)) targetElement.style.transition = endTransition;
-            endCallback();
-        }, 1)
+        if(endTransition !== (undefined||null)) targetElement.style.transition = endTransition;
+        endCallback();
     });
 }
