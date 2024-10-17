@@ -67,8 +67,11 @@
         pointer-events: NONE !important; /*READ MOUSE EVENT UNDER THE DRAGGABLE*/
         margin-bottom: 50px;
     }
-    #game .dragging:active .inner-card{
+    @keyframes flipToBack{0% {transform: rotateY(0deg);}100%{transform: rotateY(180deg);}}
+    #game .dragging .inner-card{ /*Flipping Animation*/
         transform: rotateY(180deg);
+        animation-name: flipToBack;
+        animation-duration: var(--anim-flippable-time);
     }
     #game[drag-active='true'] .hand .outer-card:hover{/* INSERTION ANIM */
         margin-right: var(--anim-insert-dist) !important;

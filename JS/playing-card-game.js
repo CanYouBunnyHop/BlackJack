@@ -164,18 +164,19 @@ function draggableLogic(startEvent){ //MOUSE DOWN EVENT
             [new PropValPair('marginLeft',`${HAND_CARD_WIDTH}px`)],
             ()=>{START_POS.sibR.style.transition = `${__ANIM_MOVE_INITIAL_TRANSITION}`;}
         );
-        // START_POS.sibR.style.transition = `margin 0s`; //override margin
-        // START_POS.sibR.style.marginLeft = `${HAND_CARD_WIDTH}px`;
-        // requestAnimationFrame(()=>{setTimeout(()=>{START_POS.sibR.style.transition = `${__ANIM_MOVE_INITIAL_TRANSITION}`}}, 1));
     }
     document.addEventListener('mousemove', onDrag);
     document.addEventListener('mouseup', releaseDrag);
     DRAG_TARGET.style.position = 'fixed';
     //For css, disable hover animation
     DRAG_TARGET.classList.add('disable-hover-anim');
+    //DRAG_TARGET.classList.add('over-slot');
     GAME.appendChild(DRAG_TARGET);
-    requestAnimationFrame(()=>{onDrag(startEvent)});
+    onDrag(startEvent);
     function onDrag(event){
+        // if(GAME.querySelector('.active-slot'))
+        //     DRAG_TARGET.classList.add('over-slot');
+        // else DRAG_TARGET.classList.remove('over-slot');
         let _mDeltaX = event.pageX - START_POS.mousePos.x;
         let _mDeltaY = event.pageY - START_POS.mousePos.y;
         let followPos = new Vector2(START_POS.x + _mDeltaX, START_POS.y + _mDeltaY);
@@ -281,6 +282,7 @@ function draggableLogic(startEvent){ //MOUSE DOWN EVENT
         //Using timeout instead of event because event is buggy with spam clicks;
         requestAnimationFrame(()=>{setTimeout(endTransistion, (1000*__ANIM_MOVE_TIME))});
         function endTransistion(){
+            DRAG_TARGET.setAttribute('hoveringOnSlot', null);
             TARGET_SLOT.slot.insertBefore(DRAG_TARGET, TARGET_POS.sibR);
             //Enable hover animation again
             DRAG_TARGET.classList.remove('disable-hover-anim');
