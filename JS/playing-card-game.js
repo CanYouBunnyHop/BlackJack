@@ -17,6 +17,8 @@ class Card {
         let clone = PROTO_CARD.cloneNode(true);
         clone.classList.remove('prototype');
         clone._cardDisplay_= clone.querySelector('.card-front-display');
+        clone._number_ = this.number; // for easy access later for calculating points
+        clone._suit_ = this.suit;
         let leftCol = clone._cardDisplay_.querySelector('.column[POS="LEFT"]');
         let midCol = clone._cardDisplay_.querySelector('.column[POS="MIDDLE"]');
         let rightCol = clone._cardDisplay_.querySelector('.column[POS="RIGHT"]');
@@ -57,6 +59,7 @@ class Card {
 }
 const PLAYER_HAND = GAME.querySelector('#player-hand');
 const DEALER_HAND = GAME.querySelector('#dealer-hand');
+
 const PROTO_DECK = createDeck(); //Cache the deck, no need to loop again
 var currentDeck = [...PROTO_DECK];
 function createDeck(){
@@ -69,7 +72,7 @@ function createDeck(){
 function resetCurrentDeck(){currentDeck = [...PROTO_DECK]};
 function resetCardGame(){
     resetCurrentDeck();
-    //ADD ANIMATION TODO
+    //ADD ANIMATION? TODO
     let cards = GAME.querySelectorAll('.outer-card:not(.prototype)');
     cards.forEach(card=>{card.remove()})
 }
@@ -111,7 +114,9 @@ const __CARD_WIDTH = CARD_STYLE.__card_width,
     __ANIM_SELECT_TIME = CARD_STYLE.__anim_select_time,
     __ANIM_MOVE_TIME = CARD_STYLE.__anim_move_time,
     __ANIM_MOVE_INITIAL_TRANSITION = CARD_STYLE.RAW__anim_move_initial_transition;
-//
+
+const HAND_CARD_WIDTH = __CARD_WIDTH + __HAND_CARD_OFFSET;
+    //
 // DRAGGABLE RELATED LOGICS
 // BUG: targetpos.sibR.marginleft // not fixed
 function draggableLogic(startEvent){ //MOUSE DOWN EVENT
@@ -142,7 +147,7 @@ function draggableLogic(startEvent){ //MOUSE DOWN EVENT
         sibL: _targetNeighbors.prev,
         sibR: _targetNeighbors.next
     };
-    const HAND_CARD_WIDTH = __CARD_WIDTH + __HAND_CARD_OFFSET;
+    
     let dragTargetWas1st = START_POS.index===1;
     if(START_POS.sibR){//If start sibR exist, apply hand-card width Margin Offset
         playTransition(START_POS.sibR, 'margin 0s', 
@@ -172,7 +177,7 @@ function draggableLogic(startEvent){ //MOUSE DOWN EVENT
         const RELEASE_STATE = {NONE: "None", LEFT_MOST: "L", MIDDLE: "M", RIGHT_MOST: "R"};
         setDragging(false); //set GAME attribute, remove dragging class, set transition
         document.removeEventListener('mousemove', onDrag);
-        const ACTIVE_SLOT = GAME.querySelector('.active-slot');
+        const ACTIVE_SLOT = GAME.querySelector('.active-slot[lock=false]');//if lock is true, will not be considered active
         let _targetSlot = ACTIVE_SLOT ?? START_POS.slot;
         const IS_SAME_SLOT = _targetSlot === START_POS.slot;
         const TARGET_SLOT = {
@@ -194,7 +199,7 @@ function draggableLogic(startEvent){ //MOUSE DOWN EVENT
                 return RELEASE_STATE.LEFT_MOST;
             return RELEASE_STATE.MIDDLE;
         })();//Immediate Invoke ENDS
-        console.log(releaseState) //DEBUG
+        //console.log(releaseState) //DEBUG
         let _targetPos = {};
         switch (releaseState){
             case RELEASE_STATE.NONE:
@@ -251,8 +256,10 @@ function draggableLogic(startEvent){ //MOUSE DOWN EVENT
         DRAG_TARGET.style.left =`${TARGET_POS.x - sameSlotOffset}px`;
         DRAG_TARGET.style.top = `${TARGET_POS.y}px`;
         document.removeEventListener('mouseup', releaseDrag);
+
         //Using timeout instead of event because event is buggy with spam clicks;
         setTimeout(endTransistion, (1000*__ANIM_MOVE_TIME));
+
         function endTransistion(){
             //Reset Siblings margins
             [TARGET_POS.sibL, TARGET_POS.sibR].forEach(sib=>{if(sib){
@@ -262,7 +269,7 @@ function draggableLogic(startEvent){ //MOUSE DOWN EVENT
             }});
             //This need to wait for the foreach loop to end
             //Enable hover animation again
-            playTransition(DRAG_TARGET, 'undefined',[
+            playTransition(DRAG_TARGET, undefined,[
                 new PropValPair('position', 'relative'),
                 new PropValPair('left', '0px'),
                 new PropValPair('top', '0px')],
@@ -273,7 +280,6 @@ function draggableLogic(startEvent){ //MOUSE DOWN EVENT
                 DRAG_TARGET.classList.remove('disable-hover-anim');
                 GAME.setAttribute('transitioning', false);
             });
-           
         } //END endTransistion
     }//END releaseDrag
 }//END draggableLogic
@@ -282,84 +288,125 @@ function slotLogic(event){
     slot.classList.add('active-slot');
     slot.addEventListener('mouseleave', _event=>{ slot.classList.remove('active-slot') });
 }
-function popCardFromDeck(hand){//TEST
-    //pseudo code
-    //get hand's last child
-    //if last child is first child
-    //  offset 0
-    //else
-    //  offset -cardWidth + hand card space
-    //
-    //Get random card, create element, append to deck
-    //posiiton = fixed
-    //Card element start from deck position
-    //Go to last child left + offset
-    //Go to last child top
-    //
-    //after set timeout 1s 
-    //  reset positions to 0
-    //  style position = relative  
-    //  append child
+function popCardFromDeck(_targetHand, _deckSelector ='.deck:hover',flipOver=true, isDraggable=true){//TEST
+    if(GAME.getAttribute('transitioning') === 'true') return;
+    const _deckRect = GAME.querySelector(_deckSelector).getBoundingClientRect();
+    const DECK_POS = new Vector2(_deckRect.left, _deckRect.top);
+    const _lastChildRect = _targetHand.lastElementChild.getBoundingClientRect();
+    const _isFirstLastSame = _targetHand.lastElementChild === _targetHand.firstElementChild;
+    const _xOffset = _isFirstLastSame ? _lastChildRect.width + 3  : HAND_CARD_WIDTH;
+    const TARGET_POS = new Vector2(_lastChildRect.left + _xOffset, _lastChildRect.top);
+    const NEW_CARD = popRandomFromArr(currentDeck).createElement(); //create card element
+    const INNER_CARD = NEW_CARD.querySelector('.flippable');
+    GAME.appendChild(NEW_CARD);
+    //Set starting pos, initial values
+    GAME.setAttribute('transitioning', true);
+    NEW_CARD.style.position = 'fixed';
+    NEW_CARD.style.left = `${DECK_POS.x}px`; NEW_CARD.style.top = `${DECK_POS.y}px`;
+    INNER_CARD.style.transform = 'rotateY(180deg)'; //start on face back
+    requestAnimationFrame(()=>{
+        playTransition(NEW_CARD, __ANIM_MOVE_INITIAL_TRANSITION, //MOVE CARD
+            [new PropValPair('left',`${TARGET_POS.x}px`), new PropValPair('top', `${TARGET_POS.y}px`)],
+            undefined
+        );
+        if(flipOver === false) return; //dont flip card, if card is not suppose to flip
+        playTransition(INNER_CARD, undefined, //FLIP CARD
+            [new PropValPair('transform', 'rotateY(0deg)')], 
+            undefined  
+        );
+    });
 
-
-
-    // const _deckRect = GAME.querySelector('.deck:hover').getBoundingClientRect();
-    // const DECK_POS = new Vector2(_deckRect.left, _deckRect.top);
-    
-    // //testing for now
-    // let newCard = createCardElement();
-    // //set draggable logic here
-
-
-    // GAME.appendChild(newCard);
-    // newCard.style.left = `${DECK_POS.x}px`;
-    // newCard.style.top = `${DECK_POS.y}px`;
-    // newCard.style.position='fixed';
-
-    // //GETTING OFFSET HERE
-    // var hand = document.getElementById('player-hand');
-    // var lastChildRect = [...hand.children].pop().getBoundingClientRect();
-
-    // //TARGET
-    // var xOffset = lastChildRect.right - 200; //MAGIC NUMBER FROM CSS
-    // var yOffset = lastChildRect.top;
-
-    // //GO TO TARGET AFTER TIMEOUT
-    // setTimeout(()=>{
-    //     newCard.style.left = `${xOffset}px`;
-    //     newCard.style.top = `${yOffset}px`;
-    // },1);
-
-    // //use transistion end instead
-    // //APPEND and reset values
-    //     setTimeout(()=>{
-    //         console.log('frame called');
-    //         hand.appendChild(newCard)
-    //         newCard.style.left = `${0}px`;
-    //         newCard.style.top = `${0}px`;
-    //         newCard.style.position='relative';
-    //     },1000);
+    return new Promise((resolve)=>{
+        setTimeout(()=>{
+            NEW_CARD.style.position = 'relative';
+            NEW_CARD.style.left = `${0}px`; NEW_CARD.style.top = `${0}px`;
+            INNER_CARD.style.transform = ''; //clear overridden flip transform
+            _targetHand.appendChild(NEW_CARD);
+            if(isDraggable) setDraggableLogic(NEW_CARD); //Set draggable logic if isDraggable is set to true
+            GAME.setAttribute('transitioning', false);
+            requestAnimationFrame(()=>{resolve(NEW_CARD)}); //Resolve after everything else is completed
+        }, 1000 * __ANIM_MOVE_TIME);
+    });
 }
-//
-//
-//WHEN PAGE FINISH LOADING //PROBABLY WANT TO USE DEFERED ON THE SCRIPT INSTEAD
-window.onload = function(){
-    for(let i =0; i<5; i++){ //For testing
-        let randomCard = popRandomFromArr(currentDeck);
-        let cardEl = randomCard.createElement();
-        PLAYER_HAND.appendChild(cardEl);
-        setDraggableLogic(cardEl);
-    }
-    setAllElementWithLogic('.slot', 'mouseenter', slotLogic);
-};
-//
-//
-//
+
 //
 //BLACK JACK RELATED GAME LOGIC
 //
 
+//WHEN PAGE FINISH LOADING //PROBABLY WANT TO USE DEFERED ON THE SCRIPT INSTEAD
+window.onload = function(){
+    setAllElementWithLogic('.slot', 'mouseenter', slotLogic);
+};
+class BaseState {
+    constructor(_enter=()=>{}, _exit=()=>{}){
+        this.enter = _enter;
+        this.exit = _exit;
+    }
+}
+class BaseStateMachine{
+    _currentState = undefined;
+    constructor(_initState){this._currentState = _initState};
+    get currentState(){return this._currentState};
+    set currentState(_otherState){
+       this._currentState.exit();
+       _otherState.enter();
+    }
+}
+const GAME_STATE = { 
+    deal : 'deal', 
+    playersTurn: 'pturn', 
+    dealersTurn: 'dturn', 
+    endTurn: 'end'
+};
+//Game state machine pseudocode
+//press deal button
+//finish dealing
+//enter state, playersTurn
+//hit or stand
+//hit = hit card, if busted, dealer's turn
+//stand, dealer's turn
+//
+//dealer logic ....
+//keep drawing until they reach over 17 points
+//
+//endTurn state
+//calculate points //win draw or lose
+//shuffle
+//
+//back to deal state
 
+async function dealCards(){
+    await dealCardsToPlayer();
+    await dealCardsToDealer();
+    //go to player's turn in state machine
+    async function dealCardsToDealer(){
+        await popCardFromDeck(DEALER_HAND,'#universal-deck', true, false);
+        return popCardFromDeck(DEALER_HAND,'#universal-deck', false, false);
+    }
+    async function dealCardsToPlayer(){
+        await popCardFromDeck(PLAYER_HAND,'#universal-deck', true, true);
+        return popCardFromDeck(PLAYER_HAND,'#universal-deck', true, true);
+    }
+}
+function hitPlayer(){
+    popCardFromDeck(PLAYER_HAND,'#universal-deck', true, true);
+}
+function getBlackJackCardPoints(hand){ //not the most efficient way to do calculation, but most managable
+    let aceCounter = 0;
+    function getCardPoint(_cardEl){
+        switch(_cardEl._number_){
+            case 'A': aceCounter++; return 11; //Return 11 for now, will -10 later
+            case 'J': case 'Q': case 'K': return 10;
+            default: return parseInt(_cardEl._number_);
+        }
+    }
+    const cardElements = [...hand.children].slice(1, undefined); //returns all the cards, minus the starting child
+    var totalSum = cardElements.reduce((prev, cur)=>{return prev + getCardPoint(cur)}, 0); //starts with 0, so no type checking needed
+    while(totalSum > 21 && aceCounter > 0){ //if total is bust, and has ace in hand, -10 to total sum
+        aceCounter--; totalSum -= 10;
+    }
+    return totalSum;
+}
 //
 //UTIL
 //
@@ -398,13 +445,12 @@ function getRandomFromArr(arr=[]){
 class PropValPair {
     constructor(_prop, _val) { this.prop = _prop; this.val = _val; }
 }
-function playTransition(targetElement, initTransition='', styleProperties=[{prop:'', val:''}],  endTransition='', endCallback=()=>{}){
+function playTransition(targetElement, initTransition='', styleProperties=[{prop:'', val:''}],  endTransition=''){
     if(initTransition !== (undefined||null)) targetElement.style.transition = initTransition;
     styleProperties.forEach(pVPair => {
         targetElement.style[pVPair.prop] = pVPair.val;
     });
     requestAnimationFrame(()=>{
         if(endTransition !== (undefined||null)) targetElement.style.transition = endTransition;
-        endCallback();
     });
 }

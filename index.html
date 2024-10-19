@@ -7,39 +7,42 @@
 </head>
 <link rel="stylesheet" href="styles/dark-theme.css">
 <link rel="stylesheet" href="styles/playing-card.css"> <!--Link to playing-card.css-->
-    <!-- X:<input type="text" id="x">  Y:<input type="text" id="y"> <br>
-    mX:<input type="text" id="mx">  mY:<input type="text" id="my"> <br>
-    <button type="button" onmousedown="popCardFromDeck(event)">Hit</button> -->
-    <div id="game" style="user-select: NONE;">
-            <div class="outer-card draggable prototype" lock="false">
-                <div class="inner-card flippable">
-                    <div class="front-face">
-                        <span class="number"CORNER='TOP'>A</span>
-                        <span class="suit"CORNER='TOP'></span>
-                        <span class="card-front-display">
-                            <span class="column"POS='LEFT'></span>
-                            <span class="column"POS='MIDDLE'></span>
-                            <span class="column"POS='RIGHT'></span>
-                        </span><!--end card-front-display-->
-                        <span class="suit"CORNER='BOT'></span>
-                        <span class="number"CORNER='BOT'>A</span>
-                    </div><!--end front-face-->
-                    <div class="back-face">
-                        <span class="card-back-display">CARD</span>
-                    </div><!--end back-face-->
-                </div><!--end inner-card-->
-            </div><!--end outer-card-->
-        <div class="hand slot" capacity=-1 lock=false id="dealer-hand">
-            <div class="slot-start draggable" lock="true"></div> <!--for inserting left most card-->
-        </div><!--end dealer-hand-->
-        <div class="hand slot" capacity=-1 lock=false id="player-hand">
-            <div class="slot-start draggable" lock="true"></div> <!--for inserting left most card-->
-        </div><!--end hand-->
-        <div class="deck" onmousedown="popCardFromDeck()">
+
+<div id="game" style="user-select: NONE;">
+    <div class="button-menu">
+        <button type="button" onmousedown="dealCards()" id="deal-but">Deal</button>
+        <button type="button" onmousedown="hitPlayer()" id="hit-but">Hit</button> <!--Same as tapping the deck, might disable hitting deck-->
+        <button type="button" onmousedown=""id="stand-but">Stand</button> 
+    </div>
+    <div class="outer-card draggable prototype" lock="false">
+        <div class="inner-card flippable">
+            <div class="front-face">
+                <span class="number"CORNER='TOP'>A</span>
+                <span class="suit"CORNER='TOP'></span>
+                <span class="card-front-display">
+                    <span class="column"POS='LEFT'></span>
+                    <span class="column"POS='MIDDLE'></span>
+                    <span class="column"POS='RIGHT'></span>
+                </span><!--end card-front-display-->
+                <span class="suit"CORNER='BOT'></span>
+                <span class="number"CORNER='BOT'>A</span>
+            </div><!--end front-face-->
             <div class="back-face">
-                <span class="card-back-display" style="pointer-events: none;">CARD</span>
+                <span class="card-back-display">CARD</span>
             </div><!--end back-face-->
-        </div>
-    </div><!--end #game-->
+        </div><!--end inner-card-->
+    </div><!--end outer-card-->
+    <div class="hand slot" capacity=-1 lock=true id="dealer-hand">
+        <div class="slot-start draggable" lock="true"></div> <!--for inserting left most card-->
+    </div><!--end dealer-hand-->
+    <div class="hand slot" capacity=-1 lock=false id="player-hand">
+        <div class="slot-start draggable" lock="true"></div> <!--for inserting left most card-->
+    </div><!--end hand-->
+    <div class="deck" id="universal-deck"> <!--onmousedown="popCardFromDeck(PLAYER_HAND)"-->
+        <div class="back-face">
+            <span class="card-back-display" style="pointer-events: none;">CARD</span>
+        </div><!--end back-face-->
+    </div>
+</div><!--end #game-->
 <script type="text/javascript" src="JS/playing-card-game.js" defer></script>
 </html>
