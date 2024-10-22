@@ -1,7 +1,9 @@
 //
 //PLAYING CARD GAMES SHARED LOGIC
-//
+// 
 const GAME = document.getElementById('game');
+const GAME_OVERLAY =  GAME.querySelector('#game-overlay');
+const GAME_OVERLAY_MSG = GAME_OVERLAY.querySelector('#game-overlay-msg');
 const PROTO_SUIT = document.createElement('span');
 PROTO_SUIT.classList.add('suit');
 const PROTO_CARD = GAME.querySelector('.outer-card.prototype'); //GET THE PROTOTYPE ELEMENT
@@ -80,8 +82,8 @@ function resetCardGame(){
 function setSlotLogic(element){element.addEventListener('mouseenter', slotLogic)}
 function setDraggableLogic(element){element.addEventListener('mousedown', draggableLogic);}
 
-const _cardStyle = getComputedStyle(GAME);
-const CARD_STYLE = {};
+const _style = getComputedStyle(GAME);
+const _STYLE = {};
 const CARD_STYLE_PROPERTIES = {
     __card_width: '--card-width',
     __card_height:'--card-height',
@@ -92,29 +94,31 @@ const CARD_STYLE_PROPERTIES = {
     __anim_flippable_time:'--anim-flippable-time',
     __anim_select_time : '--anim-select-time',
     __anim_move_time : '--anim-move-time',
+    __overlay_fade_time : '--overlay-fade-time',
     RAW__anim_move_initial_transition : '--anim-move-initial-transition', //RAW means don't convert to numeric
 };
 //Get the values set in css
 Object.keys(CARD_STYLE_PROPERTIES).forEach(key=>{
-    Object.defineProperty(CARD_STYLE, key, {
+    Object.defineProperty(_STYLE, key, {
     get: ()=>{
-        let value = _cardStyle.getPropertyValue(CARD_STYLE_PROPERTIES[key]);
+        let value = _style.getPropertyValue(CARD_STYLE_PROPERTIES[key]);
         if(key.startsWith('RAW')) return value;
         return convertCSSPropertyToNumeric(value);
     }});
 });
 //Destructuring card style Doesnt work on getters, assign them manually
-const __CARD_WIDTH = CARD_STYLE.__card_width, 
-    __CARD_HEIGHT = CARD_STYLE.__card_height, 
-    __HAND_CARD_OFFSET = CARD_STYLE.__hand_card_offset,
-    __ANIM_SELECT_DIST = CARD_STYLE.__anim_select_dist,
-    __ANIM_INSERT_DIST = CARD_STYLE.__anim_insert_dist,
-    __ANIM_TIME_SCALE = CARD_STYLE.__anim_time_scale,
-    __ANIM_FLIPPABLE_TIME = CARD_STYLE.__anim_flippable_time,
-    __ANIM_SELECT_TIME = CARD_STYLE.__anim_select_time,
-    __ANIM_MOVE_TIME = CARD_STYLE.__anim_move_time,
-    __ANIM_MOVE_INITIAL_TRANSITION = CARD_STYLE.RAW__anim_move_initial_transition;
-
+const __CARD_WIDTH = _STYLE.__card_width, 
+    __CARD_HEIGHT = _STYLE.__card_height, 
+    __HAND_CARD_OFFSET = _STYLE.__hand_card_offset,
+    __ANIM_SELECT_DIST = _STYLE.__anim_select_dist,
+    __ANIM_INSERT_DIST = _STYLE.__anim_insert_dist,
+    __ANIM_TIME_SCALE = _STYLE.__anim_time_scale,
+    __ANIM_FLIPPABLE_TIME = _STYLE.__anim_flippable_time,
+    __ANIM_SELECT_TIME = _STYLE.__anim_select_time,
+    __ANIM_MOVE_TIME = _STYLE.__anim_move_time,
+    __OVERLAY_FADE_TIME = _STYLE.__overlay_fade_time,
+    __ANIM_MOVE_INITIAL_TRANSITION = _STYLE.RAW__anim_move_initial_transition;
+    
 const HAND_CARD_WIDTH = __CARD_WIDTH + __HAND_CARD_OFFSET;
     //
 // DRAGGABLE RELATED LOGICS
@@ -132,7 +136,8 @@ function draggableLogic(startEvent){ //MOUSE DOWN EVENT
         }
     }
     if(DRAG_TARGET.getAttribute('lock') === "true") return; //IF LOCKED RETURN
-    if(GAME.getAttribute('transitioning') === "true") return; //OPTIONAL
+    if(GAME.getAttribute('transitioning') === "true") return;
+    GAME_STATE_MACHINE.currentState = GAME_STATE.playerDrag;
     let _startSlot = startEvent.target.closest('.slot');
     if(!_startSlot) return; //THIS PREVENT SPAM CLICK
     DRAG_TARGET.style.marginLeft = '0px';
@@ -147,13 +152,14 @@ function draggableLogic(startEvent){ //MOUSE DOWN EVENT
         sibL: _targetNeighbors.prev,
         sibR: _targetNeighbors.next
     };
-    
     let dragTargetWas1st = START_POS.index===1;
     if(START_POS.sibR){//If start sibR exist, apply hand-card width Margin Offset
-        playTransition(START_POS.sibR, 'margin 0s', 
-            [new PropValPair('marginLeft',`${HAND_CARD_WIDTH}px`)],
-            `${__ANIM_MOVE_INITIAL_TRANSITION}`
-        );
+        START_POS.sibR.style.transition = 'margin 0s';
+        requestFrame(()=>{
+            START_POS.sibR.style.marginLeft = `${HAND_CARD_WIDTH}px`;
+        }).then(()=>{return requestFrame(()=>{
+            START_POS.sibR.style.transition = `${__ANIM_MOVE_INITIAL_TRANSITION}`;
+        })})
     }
     document.addEventListener('mousemove', onDrag);
     document.addEventListener('mouseup', releaseDrag);
@@ -243,8 +249,10 @@ function draggableLogic(startEvent){ //MOUSE DOWN EVENT
         if(TARGET_POS.sibR) 
             TARGET_POS.sibR.style.marginLeft = `${HAND_CARD_WIDTH}px`;
         //if target position's right sib is not the same as starting position's right sib, reset margin left
-        if(START_POS.sibR && START_POS.sibR !== TARGET_POS.sibR)
-            playTransition(START_POS.sibR,`${__ANIM_MOVE_INITIAL_TRANSITION}`, [new PropValPair('marginLeft', '0px')], undefined);
+        if(START_POS.sibR && START_POS.sibR !== TARGET_POS.sibR){
+            START_POS.sibR.style.transition = `${__ANIM_MOVE_INITIAL_TRANSITION}`;
+            requestFrame(()=>{START_POS.sibR.style.marginLeft = '0px';})
+        }
         //Additional position offset applied if starting slot and target slot is the same
         let _targetSibLIndex = [...TARGET_SLOT.slot.children].indexOf(TARGET_POS.sibL);
         let sameSlotOffset = (()=>{//Immediate Invoke
@@ -269,17 +277,18 @@ function draggableLogic(startEvent){ //MOUSE DOWN EVENT
             }});
             //This need to wait for the foreach loop to end
             //Enable hover animation again
-            playTransition(DRAG_TARGET, undefined,[
-                new PropValPair('position', 'relative'),
-                new PropValPair('left', '0px'),
-                new PropValPair('top', '0px')],
-                `${__ANIM_MOVE_INITIAL_TRANSITION}`, ()=>{console.log('Append insert')}
-            );
-            TARGET_SLOT.slot.insertBefore(DRAG_TARGET, TARGET_POS.sibR);
-            requestAnimationFrame(()=>{
+            requestFrame(()=>{
+                DRAG_TARGET.style.position = 'relative';
+                DRAG_TARGET.style.left = '0px';
+                DRAG_TARGET.style.top = '0px';
+                TARGET_SLOT.slot.insertBefore(DRAG_TARGET, TARGET_POS.sibR);
+            }).then(()=>{return requestFrame(()=>{
+                DRAG_TARGET.style.transition = `${__ANIM_MOVE_INITIAL_TRANSITION}`;
+            })}).then(()=>{
                 DRAG_TARGET.classList.remove('disable-hover-anim');
                 GAME.setAttribute('transitioning', false);
-            });
+                GAME_STATE_MACHINE.currentState = GAME_STATE.playersTurn;
+            })
         } //END endTransistion
     }//END releaseDrag
 }//END draggableLogic
@@ -302,33 +311,27 @@ function popCardFromDeck(_targetHand, _deckSelector ='.deck:hover',flipOver=true
     //Set starting pos, initial values
     GAME.setAttribute('transitioning', true);
     NEW_CARD.style.position = 'fixed';
+    NEW_CARD.style.transition = __ANIM_MOVE_INITIAL_TRANSITION;
     NEW_CARD.style.left = `${DECK_POS.x}px`; NEW_CARD.style.top = `${DECK_POS.y}px`;
     INNER_CARD.style.transform = 'rotateY(180deg)'; //start on face back
-    requestAnimationFrame(()=>{
-        playTransition(NEW_CARD, __ANIM_MOVE_INITIAL_TRANSITION, //MOVE CARD
-            [new PropValPair('left',`${TARGET_POS.x}px`), new PropValPair('top', `${TARGET_POS.y}px`)],
-            undefined
-        );
-        if(flipOver === false) return; //dont flip card, if card is not suppose to flip
-        playTransition(INNER_CARD, undefined, //FLIP CARD
-            [new PropValPair('transform', 'rotateY(0deg)')], 
-            undefined  
-        );
-    });
 
-    return new Promise((resolve)=>{
-        setTimeout(()=>{
-            NEW_CARD.style.position = 'relative';
-            NEW_CARD.style.left = `${0}px`; NEW_CARD.style.top = `${0}px`;
-            INNER_CARD.style.transform = ''; //clear overridden flip transform
-            _targetHand.appendChild(NEW_CARD);
-            if(isDraggable) setDraggableLogic(NEW_CARD); //Set draggable logic if isDraggable is set to true
-            GAME.setAttribute('transitioning', false);
-            requestAnimationFrame(()=>{resolve(NEW_CARD)}); //Resolve after everything else is completed
-        }, 1000 * __ANIM_MOVE_TIME);
-    });
+    return requestFrame(()=>{
+        NEW_CARD.style.left = `${TARGET_POS.x}px`;
+        NEW_CARD.style.top = `${TARGET_POS.y}px`;
+        if(flipOver) INNER_CARD.style.transform = 'rotateY(0deg)';
+    }).then(()=>{return timer(__ANIM_MOVE_TIME);})
+    .then(()=>{return requestFrame(()=>{
+        NEW_CARD.style.position = 'relative';
+        NEW_CARD.style.left = `${0}px`; NEW_CARD.style.top = `${0}px`;
+        INNER_CARD.style.transform = ''; //clear overridden flip transform
+        _targetHand.appendChild(NEW_CARD);
+        if(isDraggable) setDraggableLogic(NEW_CARD); //Set draggable logic if isDraggable is set to true
+        GAME.setAttribute('transitioning', false);
+    })})
 }
-
+function getCardsFromHand(hand){
+   return [...hand.children].slice(1, undefined);
+}
 //
 //BLACK JACK RELATED GAME LOGIC
 //
@@ -337,59 +340,168 @@ function popCardFromDeck(_targetHand, _deckSelector ='.deck:hover',flipOver=true
 window.onload = function(){
     setAllElementWithLogic('.slot', 'mouseenter', slotLogic);
 };
+//
+//new state machine util
+//
 class BaseState {
-    constructor(_enter=()=>{}, _exit=()=>{}){
+    constructor(_enter=()=>{}, _during=()=>{}, _exit=()=>{}){
         this.enter = _enter;
+        this.during = _during;
         this.exit = _exit;
     }
 }
 class BaseStateMachine{
-    _currentState = undefined;
-    constructor(_initState){this._currentState = _initState};
-    get currentState(){return this._currentState};
+    _curState = undefined;
+    constructor(_initState){this._curState = _initState; this._curState.enter()};
+    get currentState(){return this._curState};
     set currentState(_otherState){
-       this._currentState.exit();
+        this._curState.exit();
+        this._curState = _otherState;
        _otherState.enter();
     }
 }
-const GAME_STATE = { 
-    deal : 'deal', 
-    playersTurn: 'pturn', 
-    dealersTurn: 'dturn', 
-    endTurn: 'end'
-};
-//Game state machine pseudocode
-//press deal button
-//finish dealing
-//enter state, playersTurn
-//hit or stand
-//hit = hit card, if busted, dealer's turn
-//stand, dealer's turn
-//
-//dealer logic ....
-//keep drawing until they reach over 17 points
-//
-//endTurn state
-//calculate points //win draw or lose
-//shuffle
-//
-//back to deal state
+//get buttons
+const HIT_BUT = GAME.querySelector('#hit-but');
+const STAND_BUT = GAME.querySelector('#stand-but');
+const DEAL_BUT = GAME.querySelector('#deal-but');
 
-async function dealCards(){
+const GAME_STATE = { 
+    deal : new BaseState(
+        function enterDeal(){
+            HIT_BUT.disabled = true;
+            STAND_BUT.disabled = true;
+            DEAL_BUT.disabled = false;
+            GAME_OVERLAY.style.visibility = 'hidden';
+        }
+    ), 
+    playersTurn: new BaseState(
+        function enterPTurn(){
+            HIT_BUT.disabled = false;
+            STAND_BUT.disabled = false;
+            DEAL_BUT.disabled = true;
+        }
+    ), 
+    playerDrag: new BaseState(
+        function enterPDrag(){
+            HIT_BUT.disabled = true;
+            STAND_BUT.disabled = true;
+            DEAL_BUT.disabled = true;
+        }
+    ),
+    dealersTurn: new BaseState(
+        function enterDTurn(){
+            HIT_BUT.disabled = true;
+            STAND_BUT.disabled = true;
+            DEAL_BUT.disabled = true;
+            dealerAILogic(); //start recursion
+        }
+    ), 
+    endTurn: new BaseState(
+        function enterEndTurn(){
+            endTurnLogic();
+        }
+    )
+};
+const GAME_STATE_MACHINE = new BaseStateMachine(GAME_STATE.deal);
+
+async function dealCardsToPlayer(){
+    await popCardFromDeck(PLAYER_HAND,'#universal-deck', true, true);
+    return popCardFromDeck(PLAYER_HAND,'#universal-deck', true, true);
+}
+async function dealCardsToDealer(){
+    await popCardFromDeck(DEALER_HAND,'#universal-deck', true, false);
+    return popCardFromDeck(DEALER_HAND,'#universal-deck', false, false);
+}
+async function dealButtonLogic(){
     await dealCardsToPlayer();
     await dealCardsToDealer();
     //go to player's turn in state machine
-    async function dealCardsToDealer(){
-        await popCardFromDeck(DEALER_HAND,'#universal-deck', true, false);
-        return popCardFromDeck(DEALER_HAND,'#universal-deck', false, false);
+    GAME_STATE_MACHINE.currentState = GAME_STATE.playersTurn;
+}
+async function hitPButtonLogic(){
+    await popCardFromDeck(PLAYER_HAND,'#universal-deck', true, true);
+    //get player points, if over or equal to 21, got to dealer turn
+    if(getBlackJackCardPoints(PLAYER_HAND) >= 21 ) 
+        GAME_STATE_MACHINE.currentState = GAME_STATE.dealersTurn;
+}
+async function standButtonLogic() {
+    GAME_STATE_MACHINE.currentState = GAME_STATE.dealersTurn;
+}
+async function dealerAILogic(){
+    if(getBlackJackCardPoints(DEALER_HAND) < 17){
+        await popCardFromDeck(DEALER_HAND,'#universal-deck', false, false);
+        dealerAILogic(); //recursion
     }
-    async function dealCardsToPlayer(){
-        await popCardFromDeck(PLAYER_HAND,'#universal-deck', true, true);
-        return popCardFromDeck(PLAYER_HAND,'#universal-deck', true, true);
+    else{ //end dealer's turn
+       requestFrame(()=>{
+            GAME_STATE_MACHINE.currentState = GAME_STATE.endTurn;
+        })
     }
 }
-function hitPlayer(){
-    popCardFromDeck(PLAYER_HAND,'#universal-deck', true, true);
+async function endTurnLogic(){
+    //await flip all dealer's cards
+    GAME.setAttribute('transitioning', true); //disable drag
+    const unflippedDealerCards = [...DEALER_HAND.children].slice(2, undefined);
+    await new Promise(resolve=>{
+        unflippedDealerCards.forEach((card)=>{
+            card.querySelector('.flippable').style.transform = 'rotateY(0deg)'; //flip cards over
+        });
+        setTimeout(resolve, __ANIM_FLIPPABLE_TIME);
+    });
+    const playerPoints = getBlackJackCardPoints(PLAYER_HAND);
+    const dealerPoints = getBlackJackCardPoints(DEALER_HAND);
+    const playerBusted = playerPoints > 21;
+    const dealerBusted = dealerPoints > 21;
+    
+    function getGameOverMessage(){
+        //win condition //if player not busted, dealer busted or while player not busted, player > dealer
+        if(!playerBusted && dealerBusted || !playerBusted && (playerPoints > dealerPoints)){ 
+            return 'Win';
+        }
+        //draw condition //if both busted or both points are equal
+        else if(playerBusted && dealerBusted || playerPoints === dealerPoints){ 
+            return 'Draw';
+        }
+        //lose condition //if player busted, dealer not busted or while dealer not busted, dealer > player
+        else if(playerBusted && !dealerBusted || !dealerBusted && (dealerPoints > playerPoints)){
+            return 'Lose';
+        }
+    }
+    //for now, need a better way to show this
+    await timer(1);
+    GAME_OVERLAY.style.visibility = 'visible';
+    GAME_OVERLAY_MSG.innerHTML = getGameOverMessage();
+    requestFrame(()=>{
+        GAME_OVERLAY.style.animation = 'none';
+    }).then(()=>{return requestFrame(()=>{
+        GAME_OVERLAY.style.animation = null;
+    })})
+    await timer(__OVERLAY_FADE_TIME);
+    await resetCardGameWithTransition();
+    GAME_STATE_MACHINE.currentState = GAME_STATE.deal;
+    GAME.setAttribute('transitioning', false); //enable drag for cards again
+}
+async function resetCardGameWithTransition(){
+    const cards = GAME.querySelectorAll('.outer-card:not(.prototype)');
+    console.log([...cards].length);
+    const deckRect = GAME.querySelector('#universal-deck').getBoundingClientRect();
+    [...cards].forEach(card=>{
+        let cardRect = card.getBoundingClientRect();
+        requestFrame(()=>{
+            card.querySelector('.flippable').style.transform = `rotateY(180deg)`;
+        }).then(()=>{return requestFrame(()=>{
+            card.style.position = 'fixed'
+            card.style.transition = 'left 0s, top 0s';
+            card.style.left = `${cardRect.left}px`;
+            card.style.top = `${cardRect.top}px`;
+        })}).then(()=>{return requestFrame(()=>{//flip card over
+            card.style.transition = __ANIM_MOVE_INITIAL_TRANSITION; //__ANIM_MOVE_INITIAL_TRANSITION
+            card.style.left = `${deckRect.left}px`;
+            card.style.top = `${deckRect.top}px`;
+        })});
+    });
+    await timer(__ANIM_MOVE_TIME); //__ANIM_MOVE_TIME
+    resetCardGame();
 }
 function getBlackJackCardPoints(hand){ //not the most efficient way to do calculation, but most managable
     let aceCounter = 0;
@@ -400,7 +512,7 @@ function getBlackJackCardPoints(hand){ //not the most efficient way to do calcul
             default: return parseInt(_cardEl._number_);
         }
     }
-    const cardElements = [...hand.children].slice(1, undefined); //returns all the cards, minus the starting child
+    const cardElements = getCardsFromHand(hand); //returns all the cards, minus the starting child
     var totalSum = cardElements.reduce((prev, cur)=>{return prev + getCardPoint(cur)}, 0); //starts with 0, so no type checking needed
     while(totalSum > 21 && aceCounter > 0){ //if total is bust, and has ace in hand, -10 to total sum
         aceCounter--; totalSum -= 10;
@@ -410,6 +522,17 @@ function getBlackJackCardPoints(hand){ //not the most efficient way to do calcul
 //
 //UTIL
 //
+function requestFrame(callback=()=>{}){
+    return new Promise(resolve => {
+        requestAnimationFrame(()=>{
+            let result = callback();
+            resolve(result);
+        })
+    }) 
+}
+function timer(s = 0){
+    return new Promise( resolve => { setTimeout( resolve, s * 1000) } );
+}
 class Vector2 {
     constructor(_x, _y) { this.x = _x; this.y = _y; }
     add(other) { return new Vector2(this.x + other.x, this.y + other.y); }
