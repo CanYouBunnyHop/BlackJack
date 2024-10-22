@@ -53,7 +53,7 @@
         --anim-flippable-time : calc(.8s * var(--anim-time-scale));
         --anim-select-time : calc(.3s * var(--anim-time-scale));
         --anim-move-time : calc(1s * var(--anim-time-scale));
-        --overlay-fade-time : 4s;
+        --overlay-fade-time : 3s;
 
         --anim-flippable-transition: transform var(--anim-flippable-time);
         --anim-select-transition : margin-top var(--anim-select-time);
