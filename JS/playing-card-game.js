@@ -565,15 +565,3 @@ function getRandomFromArr(arr=[]){
     let i = Math.floor(Math.random() * arr.length);
     return arr[i];
 }
-class PropValPair {
-    constructor(_prop, _val) { this.prop = _prop; this.val = _val; }
-}
-function playTransition(targetElement, initTransition='', styleProperties=[{prop:'', val:''}],  endTransition=''){
-    if(initTransition !== (undefined||null)) targetElement.style.transition = initTransition;
-    styleProperties.forEach(pVPair => {
-        targetElement.style[pVPair.prop] = pVPair.val;
-    });
-    requestAnimationFrame(()=>{
-        if(endTransition !== (undefined||null)) targetElement.style.transition = endTransition;
-    });
-}
