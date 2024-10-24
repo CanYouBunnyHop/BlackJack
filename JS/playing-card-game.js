@@ -59,8 +59,7 @@ class Card {
         return clone;
     }
 }
-const PLAYER_HAND = GAME.querySelector('#player-hand');
-const DEALER_HAND = GAME.querySelector('#dealer-hand');
+
 
 const PROTO_DECK = createDeck(); //Cache the deck, no need to loop again
 var currentDeck = [...PROTO_DECK];
@@ -121,7 +120,7 @@ const __CARD_WIDTH = _STYLE.__card_width,
     
 const HAND_CARD_WIDTH = __CARD_WIDTH + __HAND_CARD_OFFSET;
 //
-// DRAGGABLE RELATED LOGICS
+// DRAGGABLE RELATED LOGICS // joins with Playing-Cards Logics
 // 
 function draggableLogic(startEvent){ //MOUSE DOWN EVENT
     const DRAG_TARGET = startEvent.target.closest('.draggable');
@@ -335,7 +334,8 @@ function getCardsFromHand(hand){
 //
 //BLACK JACK RELATED GAME LOGIC
 //
-
+const PLAYER_HAND = GAME.querySelector('#player-hand');
+const DEALER_HAND = GAME.querySelector('#dealer-hand');
 //WHEN PAGE FINISH LOADING //PROBABLY WANT TO USE DEFERED ON THE SCRIPT INSTEAD
 window.onload = function(){
     setAllElementWithLogic('.slot', 'mouseenter', slotLogic);
