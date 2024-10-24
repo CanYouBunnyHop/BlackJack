@@ -1,127 +1,30 @@
 //
 //PLAYING CARD GAMES SHARED LOGIC
-// 
+//
+
+import { currentDeck, resetCardGame } from '../Modules/Playing-Cards.js';
+import { BaseState, BaseStateMachine } from '../Modules/StateMachinePattern.js';
+import Vector2 from '../Modules/Vector2.js';
+import { setAllElementWithLogic, getNeighborElsInParent, popRandomFromArr, getCSSDeclaredValue } from '../Modules/MyMiscUtil.js';
+import{ requestFrame, timer, restartCSSAnimation} from '../Modules/CSSAnimationUtil.js';
+
 const GAME = document.getElementById('game');
 const GAME_OVERLAY =  GAME.querySelector('#game-overlay');
 const GAME_OVERLAY_MSG = GAME_OVERLAY.querySelector('#game-overlay-msg');
-const PROTO_SUIT = document.createElement('span');
-PROTO_SUIT.classList.add('suit');
-const PROTO_CARD = GAME.querySelector('.outer-card.prototype'); //GET THE PROTOTYPE ELEMENT
-const CARD_DATA = {
-    numbers : ['A','2','3','4','5','6','7','8','9','10','J','Q','K'],
-    suits : ['♠️','♣️','♥️','♦️'],
-    get randomNumber(){return getRandomFromArr(this.numbers);},
-    get randomSuit(){return getRandomFromArr(this.suits);},
-};
-class Card {
-    constructor(_suit, _number) {this.suit = _suit; this.number = _number;}
-    createElement(){
-        let clone = PROTO_CARD.cloneNode(true);
-        clone.classList.remove('prototype');
-        clone._cardDisplay_= clone.querySelector('.card-front-display');
-        clone._number_ = this.number; // for easy access later for calculating points
-        clone._suit_ = this.suit;
-        let leftCol = clone._cardDisplay_.querySelector('.column[POS="LEFT"]');
-        let midCol = clone._cardDisplay_.querySelector('.column[POS="MIDDLE"]');
-        let rightCol = clone._cardDisplay_.querySelector('.column[POS="RIGHT"]');
-        //CREATE SUIT OBJECT BASE ON NUMBERS HERE
-        let appendSuits=(l,m,r)=>{//ADD SUIT TO COLUMNS
-            for(let i=0; i<l; i++){leftCol.appendChild(PROTO_SUIT.cloneNode());}
-            for(let i=0; i<m; i++){midCol.appendChild(PROTO_SUIT.cloneNode());}
-            for(let i=0; i<r; i++){rightCol.appendChild(PROTO_SUIT.cloneNode());}
-            rotateBotSuits();
-        }
-        let rotateBotSuits=()=>{
-            [leftCol, midCol, rightCol].forEach(innerArr=>{ //MOVE SPLIT ARRAY IN HALF TO UTIL
-                let botHalfCount = Math.floor(innerArr.children.length/2);
-                let slicePos = innerArr.children.length - botHalfCount;
-                let botHalf = [...innerArr.children].slice(slicePos);
-                [...botHalf].forEach(suit=>{suit.style.transform = 'rotate(180deg)'});
-            });
-        }
-        let hideSuit=(col, index)=>{col.children[index].style.visibility ='hidden';}
-        switch (this.number){
-            case 'A':appendSuits(0,1,0);break;
-            case '2':appendSuits(0,2,0);break;
-            case '3':appendSuits(0,3,0);break;
-            case '4':appendSuits(2,0,2);break;
-            case '5':appendSuits(2,1,2);break;
-            case '6':appendSuits(3,0,3);break;
-            case '7':appendSuits(3,2,3); hideSuit(midCol, 1); break;
-            case '8':appendSuits(3,2,3);break;
-            case '9':appendSuits(4,1,4);break;
-            case '10':appendSuits(4,2,4);break;
-            case 'J': case 'Q': case 'K':appendSuits(2,0,2); hideSuit(leftCol, 1); hideSuit(rightCol, 0); break;
-        }
-        [...clone.querySelectorAll('.number')].forEach(element=>{element.innerHTML = this.number;});
-        [...clone.querySelectorAll('.suit')].forEach(element=>{element.innerHTML = this.suit;});
-        clone.style.color = ['♥️','♦️'].includes(this.suit) ? 'crimson' : 'black';
-        return clone;
-    }
-}
-
-
-const PROTO_DECK = createDeck(); //Cache the deck, no need to loop again
-var currentDeck = [...PROTO_DECK];
-function createDeck(){
-    var deck = [];
-    for(let suit of CARD_DATA.suits)
-        for(let number of CARD_DATA.numbers)
-            deck.push(new Card(suit, number));
-    return deck;
-}
-function resetCurrentDeck(){currentDeck = [...PROTO_DECK]};
-function resetCardGame(){
-    resetCurrentDeck();
-    //ADD ANIMATION? TODO
-    let cards = GAME.querySelectorAll('.outer-card:not(.prototype)');
-    cards.forEach(card=>{card.remove()})
-}
-//Event Listener Wrapper / Rename
-function setSlotLogic(element){element.addEventListener('mouseenter', slotLogic)}
-function setDraggableLogic(element){element.addEventListener('mousedown', draggableLogic);}
-
-const _style = getComputedStyle(GAME);
-const _STYLE = {};
-const CARD_STYLE_PROPERTIES = {
-    __card_width: '--card-width',
-    __card_height:'--card-height',
-    __hand_card_offset: '--hand-card-offset',
-    __anim_select_dist: '--anim-select-dist',
-    __anim_insert_dist:'--anim-insert-dist',
-    __anim_time_scale: '--anim-time-scale',
-    __anim_flippable_time:'--anim-flippable-time',
-    __anim_select_time : '--anim-select-time',
-    __anim_move_time : '--anim-move-time',
-    __overlay_fade_time : '--overlay-fade-time',
-    RAW__anim_move_initial_transition : '--anim-move-initial-transition', //RAW means don't convert to numeric
-};
-//Get the values set in css
-Object.keys(CARD_STYLE_PROPERTIES).forEach(key=>{
-    Object.defineProperty(_STYLE, key, {
-    get: ()=>{
-        let value = _style.getPropertyValue(CARD_STYLE_PROPERTIES[key]);
-        if(key.startsWith('RAW')) return value;
-        return convertCSSPropertyToNumeric(value);
-    }});
-});
-//Destructuring card style Doesnt work on getters, assign them manually
-const __CARD_WIDTH = _STYLE.__card_width, 
-    __CARD_HEIGHT = _STYLE.__card_height, 
-    __HAND_CARD_OFFSET = _STYLE.__hand_card_offset,
-    __ANIM_SELECT_DIST = _STYLE.__anim_select_dist,
-    __ANIM_INSERT_DIST = _STYLE.__anim_insert_dist,
-    __ANIM_TIME_SCALE = _STYLE.__anim_time_scale,
-    __ANIM_FLIPPABLE_TIME = _STYLE.__anim_flippable_time,
-    __ANIM_SELECT_TIME = _STYLE.__anim_select_time,
-    __ANIM_MOVE_TIME = _STYLE.__anim_move_time,
-    __OVERLAY_FADE_TIME = _STYLE.__overlay_fade_time,
-    __ANIM_MOVE_INITIAL_TRANSITION = _STYLE.RAW__anim_move_initial_transition;
-    
+const __CARD_WIDTH = getCSSDeclaredValue(GAME, '--card-width', true);
+const __HAND_CARD_OFFSET = getCSSDeclaredValue(GAME, '--hand-card-offset', true);
+const __ANIM_INSERT_DIST = getCSSDeclaredValue(GAME, '--anim-insert-dist', true);
+const __ANIM_FLIPPABLE_TIME = getCSSDeclaredValue(GAME, '--anim-flippable-time', true);
+const __ANIM_MOVE_TIME = getCSSDeclaredValue(GAME, '--anim-move-time', true);
+const __OVERLAY_FADE_TIME = getCSSDeclaredValue(GAME, '--overlay-fade-time', true);
+const __ANIM_MOVE_INITIAL_TRANSITION = getCSSDeclaredValue(GAME, '--anim-move-initial-transition', false);
 const HAND_CARD_WIDTH = __CARD_WIDTH + __HAND_CARD_OFFSET;
 //
-// DRAGGABLE RELATED LOGICS // joins with Playing-Cards Logics
-// 
+// DRAGGABLE RELATED LOGICS // Could be in playing-cards.js ?
+//
+//Event Listener Wrapper / Rename
+function setSlotLogic(element){element.addEventListener('mouseenter', slotLogic)}
+function setDraggableLogic(element){element.addEventListener('mousedown', draggableLogic);} 
 function draggableLogic(startEvent){ //MOUSE DOWN EVENT
     const DRAG_TARGET = startEvent.target.closest('.draggable');
     function setDragging(boolean = true){
@@ -296,13 +199,16 @@ function slotLogic(event){
     slot.classList.add('active-slot');
     slot.addEventListener('mouseleave', _event=>{ slot.classList.remove('active-slot') });
 }
-function popCardFromDeck(_targetHand, _deckSelector ='.deck:hover',flipOver=true, isDraggable=true){//TEST
+//
+// Could be in playing-cards.js ?
+//
+function popCardFromDeck(_targetHand, _deckSelector = '.deck:hover', flipOver=true, isDraggable=true){//TEST
     if(GAME.getAttribute('transitioning') === 'true') return;
     const _deckRect = GAME.querySelector(_deckSelector).getBoundingClientRect();
     const DECK_POS = new Vector2(_deckRect.left, _deckRect.top);
     const _lastChildRect = _targetHand.lastElementChild.getBoundingClientRect();
     const _isFirstLastSame = _targetHand.lastElementChild === _targetHand.firstElementChild;
-    const _xOffset = _isFirstLastSame ? _lastChildRect.width + 3  : HAND_CARD_WIDTH;
+    const _xOffset = _isFirstLastSame ? _lastChildRect.width + 3  : HAND_CARD_WIDTH; //Magic number 3
     const TARGET_POS = new Vector2(_lastChildRect.left + _xOffset, _lastChildRect.top);
     const NEW_CARD = popRandomFromArr(currentDeck).createElement(); //create card element
     const INNER_CARD = NEW_CARD.querySelector('.flippable');
@@ -328,6 +234,7 @@ function popCardFromDeck(_targetHand, _deckSelector ='.deck:hover',flipOver=true
         GAME.setAttribute('transitioning', false);
     })})
 }
+
 function getCardsFromHand(hand){
    return [...hand.children].slice(1, undefined);
 }
@@ -340,26 +247,7 @@ const DEALER_HAND = GAME.querySelector('#dealer-hand');
 window.onload = function(){
     setAllElementWithLogic('.slot', 'mouseenter', slotLogic);
 };
-//
-//new state machine util
-//
-class BaseState {
-    constructor(_enter=()=>{}, _during=()=>{}, _exit=()=>{}){
-        this.enter = _enter;
-        this.during = _during;
-        this.exit = _exit;
-    }
-}
-class BaseStateMachine{
-    _curState = undefined;
-    constructor(_initState){this._curState = _initState; this._curState.enter()};
-    get currentState(){return this._curState};
-    set currentState(_otherState){
-        this._curState.exit();
-        this._curState = _otherState;
-       _otherState.enter();
-    }
-}
+
 //get buttons
 const HIT_BUT = GAME.querySelector('#hit-but');
 const STAND_BUT = GAME.querySelector('#stand-but');
@@ -379,6 +267,7 @@ const GAME_STATE = {
             HIT_BUT.disabled = false;
             STAND_BUT.disabled = false;
             DEAL_BUT.disabled = true;
+            if(getBlackJackCardPoints(PLAYER_HAND)>=21) GAME_STATE_MACHINE.currentState = dealersTurn;
         }
     ), 
     playerDrag: new BaseState(
@@ -412,19 +301,20 @@ async function dealCardsToDealer(){
     await popCardFromDeck(DEALER_HAND,'#universal-deck', true, false);
     return popCardFromDeck(DEALER_HAND,'#universal-deck', false, false);
 }
-async function dealButtonLogic(){
+//Assign functions to global scope, so html button can access
+window.dealButtonLogic = async ()=>{
     await dealCardsToPlayer();
     await dealCardsToDealer();
     //go to player's turn in state machine
     GAME_STATE_MACHINE.currentState = GAME_STATE.playersTurn;
 }
-async function hitPButtonLogic(){
+window.hitPButtonLogic = async ()=>{
     await popCardFromDeck(PLAYER_HAND,'#universal-deck', true, true);
     //get player points, if over or equal to 21, got to dealer turn
     if(getBlackJackCardPoints(PLAYER_HAND) >= 21 ) 
         GAME_STATE_MACHINE.currentState = GAME_STATE.dealersTurn;
 }
-async function standButtonLogic() {
+window.standButtonLogic = async ()=>{
     GAME_STATE_MACHINE.currentState = GAME_STATE.dealersTurn;
 }
 async function dealerAILogic(){
@@ -471,11 +361,7 @@ async function endTurnLogic(){
     await timer(1);
     GAME_OVERLAY.style.visibility = 'visible';
     GAME_OVERLAY_MSG.innerHTML = getGameOverMessage();
-    requestFrame(()=>{
-        GAME_OVERLAY.style.animation = 'none';
-    }).then(()=>{return requestFrame(()=>{
-        GAME_OVERLAY.style.animation = null;
-    })})
+    await restartCSSAnimation(GAME_OVERLAY);
     await timer(__OVERLAY_FADE_TIME);
     await resetCardGameWithTransition();
     GAME_STATE_MACHINE.currentState = GAME_STATE.deal;
@@ -518,50 +404,4 @@ function getBlackJackCardPoints(hand){ //not the most efficient way to do calcul
         aceCounter--; totalSum -= 10;
     }
     return totalSum;
-}
-//
-//UTIL
-//
-function requestFrame(callback=()=>{}){
-    return new Promise(resolve => {
-        requestAnimationFrame(()=>{
-            let result = callback();
-            resolve(result);
-        })
-    }) 
-}
-function timer(s = 0){
-    return new Promise( resolve => { setTimeout( resolve, s * 1000) } );
-}
-class Vector2 {
-    constructor(_x, _y) { this.x = _x; this.y = _y; }
-    add(other) { return new Vector2(this.x + other.x, this.y + other.y); }
-    subtract(other) { return new Vector2(this.x - other.x, this.y - other.y); }
-    scale(factor) { return new Vector2(this.x * factor, this.y * factor); }
-    dot(other) { return this.x * other.x + this.y * other.y; }
-}
-function setAllElementWithLogic(selector='.className', eventName='mouseenter', logic=ev=>{}){
-    let elmnts = document.querySelectorAll(selector);
-    [...elmnts].forEach(el=>{el.addEventListener(eventName, logic)});
-}
-function convertCSSPropertyToNumeric(initVal){
-    let value = initVal
-        .replace(/(?<=[\d+])px/,'')//Remove units
-        .replace(/(?<=[\d+])s/,'') 
-        .replace(/^calc\(/,'') //Remove calc()
-        .replace(/\)$/,'');
-    return eval(value);
-}
-function getNeighborElsInParent(selfElement, parentElement){
-    let children = [...parentElement.children];
-    let selfIndex = children.indexOf(selfElement);
-    return {prev: children[selfIndex-1], next: children[selfIndex+1]};
-}
-function popRandomFromArr(arr=[]){
-    let i = Math.floor(Math.random() * arr.length);
-    return arr.splice(i, 1)[0];;
-}
-function getRandomFromArr(arr=[]){
-    let i = Math.floor(Math.random() * arr.length);
-    return arr[i];
 }
