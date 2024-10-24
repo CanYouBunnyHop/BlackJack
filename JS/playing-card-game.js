@@ -120,9 +120,9 @@ const __CARD_WIDTH = _STYLE.__card_width,
     __ANIM_MOVE_INITIAL_TRANSITION = _STYLE.RAW__anim_move_initial_transition;
     
 const HAND_CARD_WIDTH = __CARD_WIDTH + __HAND_CARD_OFFSET;
-    //
+//
 // DRAGGABLE RELATED LOGICS
-// BUG: targetpos.sibR.marginleft // not fixed
+// 
 function draggableLogic(startEvent){ //MOUSE DOWN EVENT
     const DRAG_TARGET = startEvent.target.closest('.draggable');
     function setDragging(boolean = true){
