@@ -2,11 +2,11 @@
 //PLAYING CARD GAMES SHARED LOGIC
 //
 
-import { currentDeck, resetCardGame } from '../modules/PlayingCards.js';
-import { BaseState, BaseStateMachine } from '../modules/StateMachinePattern.js';
-import Vector2 from '../modules/Vector2.js';
-import { setAllElementWithLogic, getNeighborElsInParent, popRandomFromArr, getCSSDeclaredValue } from '../modules/MyMiscUtil.js';
-import{ requestFrame, timer, restartCSSAnimation} from '../modules/CSSAnimationUtil.js';
+import { currentDeck, resetCardGame } from '../Modules/PlayingCards.js';
+import { BaseState, BaseStateMachine } from '../Modules/StateMachinePattern.js';
+import Vector2 from '../Modules/Vector2.js';
+import { setAllElementWithLogic, getNeighborElsInParent, popRandomFromArr, getCSSDeclaredValue } from '../Modules/MyMiscUtil.js';
+import{ requestFrame, timer, restartCSSAnimation} from '../Modules/CSSAnimationUtil.js';
 
 const GAME = document.getElementById('game');
 const GAME_OVERLAY =  GAME.querySelector('#game-overlay');
