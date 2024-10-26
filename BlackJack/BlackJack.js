@@ -20,7 +20,7 @@ const __OVERLAY_FADE_TIME = getCSSDeclaredValue(GAME, '--overlay-fade-time', tru
 const __ANIM_MOVE_INITIAL_TRANSITION = getCSSDeclaredValue(GAME, '--anim-move-initial-transition', false);
 const HAND_CARD_WIDTH = __CARD_WIDTH + __HAND_CARD_OFFSET;
 //
-// DRAGGABLE RELATED LOGICS // Could be in playing-cards.js ?
+// DRAGGABLE RELATED LOGICS // Very difficult to convert to module
 //
 //Event Listener Wrapper / Rename
 function setSlotLogic(element){element.addEventListener('mouseenter', slotLogic)}
@@ -69,6 +69,7 @@ function draggableLogic(startEvent){ //MOUSE DOWN EVENT
     DRAG_TARGET.classList.add('disable-hover-anim'); //For css, disable hover animation
     GAME.appendChild(DRAG_TARGET); setDragging(true); 
     onDrag(startEvent);
+
     function onDrag(event){
         let _mDeltaX = event.pageX - START_POS.mousePos.x;
         let _mDeltaY = event.pageY - START_POS.mousePos.y;

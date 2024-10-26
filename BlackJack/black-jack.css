@@ -1,0 +1,72 @@
+#game .button-menu{top: 50%; position: fixed;left: 20%; width: 50%;}
+#game .button-menu button{font-size: x-large; margin: 5%; margin-top: 0%; width: 100px;}
+#game #game-overlay{width: 100%; height: 100%; position: fixed; z-index: 3;
+    display: grid;
+    grid-template-rows: 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr;
+    animation: FadeInFadeOut var(--overlay-fade-time);
+    animation-fill-mode: both;
+    opacity: 0;
+}
+@keyframes FadeInFadeOut{
+    0% {opacity: 0;}
+    30%{opacity: 1;}
+    70%{opacity: 1;}
+    100%{opacity: 0;}
+}
+#game-overlay-inner{
+    width: 100%; height: 100%; grid-row: 2/3; grid-column: 2/3;
+    display: flex; flex-direction: column; justify-content: center;
+}
+#game-overlay-msg{
+    text-align: center;
+    background-color: rgba(0, 0, 0, 0.551);
+    font: bold;
+    font-size: 5rem; line-height: 3em; /*3 x 5rem*/
+}
+#game .deck{width:var(--card-width); height: var(--card-height);
+    top: calc(50% - var(--card-height)/2); right: 2%; position: fixed;
+}
+#game{
+    --start-slot-width: 20%;
+    --overlay-fade-time : 4s;
+    --hand-card-offset : calc(-20px * var(--card-scale));
+    --anim-select-dist : calc(-5px * var(--card-scale));
+    --anim-insert-dist : calc(-10px * var(--card-scale));
+    --anim-select-time : calc(.3s * var(--anim-time-scale));
+    --anim-move-time : calc(1s * var(--anim-time-scale));
+    --anim-select-transition : margin-top var(--anim-select-time);
+    --anim-move-initial-transition : left var(--anim-move-time), top var(--anim-move-time), margin var(--anim-move-time); 
+}
+#game #player-hand{bottom: 0px; position: fixed; margin-bottom: 2%; /*HAND ANCHOR TO BOTTOM*/}
+#game #dealer-hand{top: 0px; position: fixed; margin-top: 2%; /*HAND ANCHOR TO TOP*/}
+#game #dealer-hand .outer-card:not(:nth-child(2)) .inner-card{transform: rotateY(180deg);} /*every card except the second child is facing back*/
+#game .hand{width:100%; height: var(--card-height);
+    justify-content: center;/* align-items: center; *//* align-content: center; */
+    align-self: center; /*THIS IS IMPORTANT*/
+    align-items: center;
+}
+
+#game .slot-start{width: var(--start-slot-width);height: var(--card-height);
+    margin-right: 0px;
+    visibility: visible;
+    display: inline-block;
+}
+/*FOR INITIALIZATION, TRANSITION IS HANDLED IN JS*/
+#game .outer-card{transition: var(--anim-move-initial-transition);}
+#game .dragging .inner-card{ /*Flipping Animation and Select Animation*/
+    transform: rotateY(180deg);
+    transition: var(--anim-flippable-transition), margin-top 0s;
+    margin-top: var(--anim-select-dist) !important;
+}
+
+#game[drag-active='true'] .hand[lock=false] .outer-card:hover{/* INSERTION ANIM dont play if the slot is locked*/ 
+    margin-right: var(--anim-insert-dist) !important;
+} 
+#game .hand .outer-card{margin-right: var(--hand-card-offset);}/*CARD IN HAND EFFECT*/
+#game .hand .outer-card:not(.dragging, .disable-hover-anim):hover{transition: var(--anim-move-initial-transition);}
+
+#game .inner-card{transition: var(--anim-flippable-transition), var(--anim-select-transition);}
+#game #player-hand .outer-card:not(.disable-hover-anim):hover .inner-card{/*MOUSE HOVER, DO SELECT ANIMATION*/
+    margin-top: var(--anim-select-dist) !important;
+}

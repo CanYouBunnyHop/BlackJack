@@ -6,13 +6,14 @@
     <title>♠️♣️BLACKJACK♥️♦️</title>
     <link rel="stylesheet" href="../styles/dark-theme.css">
     <link rel="stylesheet" href="../styles/playing-card.css"> <!--Link to playing-card.css-->
-    <script type="module" src="./BlackJack.js" defer></script> <!--"text/javascript"-->
+    <link rel="stylesheet" href="./black-jack.css">
+    <script type="module" src="./BlackJack.js"></script> <!--"text/javascript"-->
 </head>
 <body>
 <div id="game" style="user-select: NONE;">
-    <div id="game-overlay">
+    <div id="game-overlay" style="animation: none;"><!--animation none prevents message to show during webpage loading-->
         <div id="game-overlay-inner">
-            <span id="game-overlay-msg">Win</span>
+            <span id="game-overlay-msg"></span>
         </div>
     </div>
     <div class="button-menu">
