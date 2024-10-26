@@ -268,7 +268,7 @@ const GAME_STATE = {
             HIT_BUT.disabled = false;
             STAND_BUT.disabled = false;
             DEAL_BUT.disabled = true;
-            if(getBlackJackCardPoints(PLAYER_HAND)>=21) GAME_STATE_MACHINE.currentState = dealersTurn;
+            if(getBlackJackCardPoints(PLAYER_HAND)>=21) GAME_STATE_MACHINE.currentState = GAME_STATE.dealersTurn;
         }
     ), 
     playerDrag: new BaseState(
