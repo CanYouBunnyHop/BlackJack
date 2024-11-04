@@ -1,0 +1,17 @@
+#game .slot{width: var(--card-width); height: var(--card-height);
+    
+}
+#game .cascade{width: var(--card-width); height: var(--card-height);
+    outline: red solid 3px;
+}
+/*testing will be removed*/
+#game .cascade .cascade-start{width: var(--card-width); height: 30px;
+    outline: rgb(17, 255, 0) solid 1px;
+    display: inline-block;
+}
+#game .card-container .card-container{ /*when card-container is within a card-container*/
+    margin-top: -150px;
+}
+#game .outer-card{
+    pointer-events: none; /*we are using card-container for pointer events*/
+}

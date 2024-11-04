@@ -8,6 +8,7 @@
     #game .suit{font-family: "Segoe UI Emoji";} /*CONSISTENT EMOJI?, Doesn't really work*/
     #game {position: relative; /* basis for cards which are outside of #hand */
         /*custom css properties*/
+        user-select: NONE;
         --card-scale : 6;
         --card-width : calc(25px * var(--card-scale));
         --card-height : calc(35px * var(--card-scale));

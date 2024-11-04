@@ -1,11 +1,28 @@
 const PROTO_SUIT = document.createElement('span'); PROTO_SUIT.classList.add('suit');
-const PROTO_CARD = document.getElementById('proto-card'); //GET THE PROTOTYPE ELEMENT
-
+const PROTO_CARD_CONTAINER = document.createElement('div'); PROTO_CARD_CONTAINER.classList.add('prototype');
+PROTO_CARD_CONTAINER.innerHTML = `
+<div class="outer-card" id='proto-card' lock="false">
+    <div class="inner-card flippable">
+        <div class="front-face">
+            <span class="number"CORNER='TOP'>A</span>
+            <span class="suit"CORNER='TOP'></span>
+            <span class="card-front-display">
+                <span class="column"POS='LEFT'></span>
+                <span class="column"POS='MIDDLE'></span>
+                <span class="column"POS='RIGHT'></span>
+            </span><!--end card-front-display-->
+            <span class="suit"CORNER='BOT'></span>
+            <span class="number"CORNER='BOT'>A</span>
+        </div><!--end front-face-->
+        <div class="back-face">
+            <span class="card-back-display">CARD</span>
+        </div><!--end back-face-->
+    </div><!--end inner-card-->
+</div><!--end outer-card-->`;
+export const PROTO_CARD = PROTO_CARD_CONTAINER.querySelector('#proto-card'); //GET THE PROTOTYPE ELEMENT
 export const CARD_DATA = {
     numbers : ['A','2','3','4','5','6','7','8','9','10','J','Q','K'],
     suits : ['♠️','♣️','♥️','♦️'],
-    get randomNumber(){return getRandomFromArr(this.numbers);},
-    get randomSuit(){return getRandomFromArr(this.suits);},
 };
 export class Card {
     constructor(_suit, _number) {this.suit = _suit; this.number = _number;}

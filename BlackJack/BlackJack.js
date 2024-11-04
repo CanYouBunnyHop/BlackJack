@@ -2,11 +2,14 @@
 //PLAYING CARD GAMES SHARED LOGIC
 //
 
-import { currentDeck, resetCardGame } from '../modules/PlayingCards.js';
+import { currentDeck, resetCardGame, PROTO_CARD } from '../modules/PlayingCards.js';
 import { BaseState, BaseStateMachine } from '../modules/StateMachinePattern.js';
 import Vector2 from '../modules/Vector2.js';
+import { defaultSlotLogic, setDraggableLogic }from '../modules/MyDraggables.js';
 import { setAllElementWithLogic, getNeighborElsInParent, popRandomFromArr, getCSSDeclaredValue } from '../modules/MyMiscUtil.js';
-import{ requestFrame, timer, restartCSSAnimation} from '../modules/CSSAnimationUtil.js';
+import { requestFrame, timer, restartCSSAnimation } from '../modules/CSSAnimationUtil.js';
+
+PROTO_CARD.classList.add('draggable'); //set the dragging parent to outer-card
 
 const GAME = document.getElementById('game');
 const GAME_OVERLAY =  GAME.querySelector('#game-overlay');
@@ -23,10 +26,8 @@ const HAND_CARD_WIDTH = __CARD_WIDTH + __HAND_CARD_OFFSET;
 // DRAGGABLE RELATED LOGICS // Very difficult to convert to module
 //
 //Event Listener Wrapper / Rename
-function setSlotLogic(element){element.addEventListener('mouseenter', slotLogic)}
-function setDraggableLogic(element){element.addEventListener('mousedown', draggableLogic);} 
-function draggableLogic(startEvent){ //MOUSE DOWN EVENT
-    const DRAG_TARGET = startEvent.target.closest('.draggable');
+function blackJackDraggableLogic(startEvent){ //MOUSE DOWN EVENT
+    const DRAG_TARGET = startEvent.target.closest('.draggable'); //get closest parent with draggable class
     function setDragging(boolean = true){
         GAME.setAttribute('drag-active', boolean);//FOR CSS TO USE THE RIGHT STYLES
         if(boolean){
@@ -65,7 +66,7 @@ function draggableLogic(startEvent){ //MOUSE DOWN EVENT
     }
     document.addEventListener('mousemove', onDrag);
     document.addEventListener('mouseup', releaseDrag);
-    DRAG_TARGET.style.position = 'fixed';
+    
     DRAG_TARGET.classList.add('disable-hover-anim'); //For css, disable hover animation
     GAME.appendChild(DRAG_TARGET); setDragging(true); 
     onDrag(startEvent);
@@ -75,6 +76,7 @@ function draggableLogic(startEvent){ //MOUSE DOWN EVENT
         let _mDeltaY = event.pageY - START_POS.mousePos.y;
         let followPos = new Vector2(START_POS.x + _mDeltaX, START_POS.y + _mDeltaY);
         //follow mouse
+        DRAG_TARGET.style.position = 'fixed';
         DRAG_TARGET.style.left = `${followPos.x}px`;
         DRAG_TARGET.style.top = `${followPos.y}px`;
         //OPTIONAL, BLOCKS GAME TO BE ABLE TO START ANOTHER TRANSITION, USE IF BUGGY
@@ -149,8 +151,7 @@ function draggableLogic(startEvent){ //MOUSE DOWN EVENT
         if(TARGET_POS.sibL && TARGET_POS.sibL !== TARGET_SLOT.firstChild) 
             TARGET_POS.sibL.marginRight = `${__HAND_CARD_OFFSET}px`;
         //Make space to card on the right, for insertion
-        if(TARGET_POS.sibR) 
-            TARGET_POS.sibR.style.marginLeft = `${HAND_CARD_WIDTH}px`;
+        if(TARGET_POS.sibR) TARGET_POS.sibR.style.marginLeft = `${HAND_CARD_WIDTH}px`;
         //if target position's right sib is not the same as starting position's right sib, reset margin left
         if(START_POS.sibR && START_POS.sibR !== TARGET_POS.sibR){
             START_POS.sibR.style.transition = `${__ANIM_MOVE_INITIAL_TRANSITION}`;
@@ -195,11 +196,6 @@ function draggableLogic(startEvent){ //MOUSE DOWN EVENT
         } //END endTransistion
     }//END releaseDrag
 }//END draggableLogic
-function slotLogic(event){
-    let slot = event.target;
-    slot.classList.add('active-slot');
-    slot.addEventListener('mouseleave', _event=>{ slot.classList.remove('active-slot') });
-}
 //
 // Could be in playing-cards.js ?
 //
@@ -231,7 +227,7 @@ function popCardFromDeck(_targetHand, _deckSelector = '.deck:hover', flipOver=tr
         NEW_CARD.style.left = `${0}px`; NEW_CARD.style.top = `${0}px`;
         INNER_CARD.style.transform = ''; //clear overridden flip transform
         _targetHand.appendChild(NEW_CARD);
-        if(isDraggable) setDraggableLogic(NEW_CARD); //Set draggable logic if isDraggable is set to true
+        if(isDraggable) setDraggableLogic(NEW_CARD, blackJackDraggableLogic); //Set draggable logic if isDraggable is set to true
         GAME.setAttribute('transitioning', false);
     })})
 }
@@ -245,9 +241,7 @@ function getCardsFromHand(hand){
 const PLAYER_HAND = GAME.querySelector('#player-hand');
 const DEALER_HAND = GAME.querySelector('#dealer-hand');
 //WHEN PAGE FINISH LOADING //PROBABLY WANT TO USE DEFERED ON THE SCRIPT INSTEAD
-window.onload = function(){
-    setAllElementWithLogic('.slot', 'mouseenter', slotLogic);
-};
+window.onload = setAllElementWithLogic('.slot', 'mouseenter', defaultSlotLogic);
 
 //get buttons
 const HIT_BUT = GAME.querySelector('#hit-but');
