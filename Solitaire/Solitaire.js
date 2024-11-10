@@ -2,7 +2,7 @@ import {currentDeck, resetCardGame, Card, CARD_DATA} from '../modules/PlayingCar
 import Vector2 from '../modules/Vector2.js';
 import { setAllElementWithLogic, getNeighborElsInParent, popRandomFromArr, getCSSDeclaredValue } from '../modules/MyMiscUtil.js';
 import{ requestFrame, timer, restartCSSAnimation } from '../modules/CSSAnimationUtil.js';
-import { defaultSlotLogic } from '../modules/MyDraggables.js';
+import {startDragChain} from '../modules/MyDraggables.js';
 //free cell //one deck
 //tableus, alternating colors
 //command pattern with undo
@@ -25,6 +25,13 @@ function createCard(_suit, _number){
 }
 //suits : ['♠️','♣️','♥️','♦️']
 
+function solitaireSlotLogic(event){
+    let slot = event.target;
+    slot.classList.add('active-slot');
+    slot.addEventListener('mouseout', _event=>{ slot.classList.remove('active-slot') });
+}
+
+
 
 //TESTING
 const tempSlot = document.querySelector('.cascade');
@@ -33,63 +40,75 @@ tempSlot.lastChild.appendChild(createCard('♠️', '2'));
 
 window.onload =()=>{ //for testing
     setAllElementWithLogic('.slot', 'mouseover', solitaireSlotLogic);
-    setAllElementWithLogic('.draggable', 'mousedown', solitaireDraggableLogic);
+    setAllElementWithLogic('.draggable', 'mousedown', (startEvent)=>startDragChain(startEvent, GAME));
 }; 
 
-function solitaireSlotLogic(event){
-    let slot = event.target;
-    slot.classList.add('active-slot');
-    slot.addEventListener('mouseout', _event=>{ slot.classList.remove('active-slot') });
-}
+// function solitaireDraggableLogic(mdownEvent){
+//     const DRAG_TARGET = mdownEvent.target;
+//     DRAG_TARGET.classList.add('dragging');
+//     let _rect = DRAG_TARGET.getBoundingClientRect();
+//     let startRect = new Vector2(_rect.x, _rect.y);
+//     let startMPos = new Vector2(mdownEvent.pageX, mdownEvent.pageY);
+//     GAME.appendChild(DRAG_TARGET);
+//     const START_OUTPUT = {
+//         DRAG_TARGET: DRAG_TARGET, 
+//         startRect : startRect, 
+//         startMPos : startMPos
+//     }
+//     onDrag(mdownEvent, START_OUTPUT) //start with mdown event
+//     const ON_DRAG = (moveEvent)=>onDrag(moveEvent, START_OUTPUT);
+//     document.addEventListener('mousemove', ON_DRAG); //for mouse move
+//     document.addEventListener('mouseup', (releaseEvent)=>releaseDrag(releaseEvent, START_OUTPUT, ON_DRAG));
+// }
+// function onDrag(dragEvent, startOutput){
+//     const{DRAG_TARGET, startRect, startMPos} = startOutput;
+//     let curMPos = new Vector2(dragEvent.pageX, dragEvent.pageY);
+//     let mDelta = curMPos.subtract(startMPos);
+//     let followPos = startRect.add(mDelta);
+//     //follow mouse
+//     DRAG_TARGET.style.position = 'fixed';
+//     DRAG_TARGET.style.left = `${followPos.x}px`;
+//     DRAG_TARGET.style.top = `${followPos.y}px`;
+// }
+// function releaseDrag(releaseEvent, startOutput, onDragRef){
+//     const{DRAG_TARGET} = startOutput;
+//     DRAG_TARGET.classList.remove('dragging');
+//     document.removeEventListener('mousemove', onDragRef);
+//     //get slot and append and stuff
+//     const ACTIVE_SLOT = GAME.querySelector('.active-slot:not(.dragging)'); //active-slot is not the dragging slot
+//     if(!ACTIVE_SLOT) return; //No active-slot found
+    // const ACTIVE_SLOT_IS_CARD = ACTIVE_SLOT.classList.contains('card-container');
+    // const SLOT_TYPE = (()=>{ //immediate invoke //Need to return the parent too
+    //     const SLOT_TYPES = ['cascade', 'cell', 'stack'];
+    //     if (ACTIVE_SLOT_IS_CARD) return SLOT_TYPES.find(type=>ACTIVE_SLOT.closest(type));
+    //     else return SLOT_TYPES.find(type=>ACTIVE_SLOT.classList.contains(type));
+    // })(); //end immediate invoke
+    // const IS_PLACEMENT_VALID = (()=>{
+    //     switch(SLOT_TYPE){
+    //         case 'cascade': 
+    //             //CHECK RANK AND SUIT COLOR
+    //             //DRAG_TARGET._suit_ //alternate color
+    //         break;
+    //         case 'cell': 
+    //             //GET PARENT aka SLOT TOP
+    //             //CHECK CAPACITY 
+    //         break;
+    //         case 'stack':
+    //             //CHECK RANK AND SUIT COLOR 
+    //         break;
+    //     }
+    // })();
+//}   
 
-function solitaireDraggableLogic(mdownEvent){
-    const DRAG_TARGET = mdownEvent.target;
-    DRAG_TARGET.classList.add('dragging');
-    document.addEventListener('mousemove', onDrag);
-    document.addEventListener('mouseup', releaseDrag);
-    let startMPos = new Vector2(mdownEvent.pageX, mdownEvent.pageY);
-    let _rect = DRAG_TARGET.getBoundingClientRect();
-    let startRect = new Vector2(_rect.x, _rect.y);
-    GAME.appendChild(DRAG_TARGET);
-    onDrag(mdownEvent);
-    function onDrag(dragEvent){
-        let curMPos = new Vector2(dragEvent.pageX, dragEvent.pageY);
-        let mDelta = curMPos.subtract(startMPos);
-        let followPos = startRect.add(mDelta);
-        //follow mouse
-        DRAG_TARGET.style.position = 'fixed';
-        DRAG_TARGET.style.left = `${followPos.x}px`;
-        DRAG_TARGET.style.top = `${followPos.y}px`;
-    }
-    function releaseDrag(){
-        DRAG_TARGET.classList.remove('dragging');
-        document.removeEventListener('mousemove', onDrag);
-        //get slot and append and stuff
-        const ACTIVE_SLOT = GAME.querySelector('.active-slot:not(.dragging)'); //active-slot is not the dragging slot
-        if(!ACTIVE_SLOT) return; //No active-slot found
-        const ACTIVE_SLOT_IS_CARD = ACTIVE_SLOT.classList.contains('card-container');
-        const SLOT_TYPE = (()=>{ //immediate invoke //Need to return the parent too
-            const SLOT_TYPES = ['cascade', 'cell', 'stack'];
-            if (ACTIVE_SLOT_IS_CARD) return SLOT_TYPES.find(type=>ACTIVE_SLOT.closest(type));
-            else return SLOT_TYPES.find(type=>ACTIVE_SLOT.classList.contains(type));
-        })(); //end immediate invoke
-        const IS_PLACEMENT_VALID = (()=>{
-            switch(SLOT_TYPE){
-                case 'cascade': 
-                    //CHECK RANK AND SUIT COLOR
-                    //DRAG_TARGET._suit_ //alternate color
-                break;
-                case 'cell': 
-                    //GET PARENT aka SLOT TOP
-                    //CHECK CAPACITY 
-                break;
-                case 'stack':
-                    //CHECK RANK AND SUIT COLOR 
-                break;
-            }
-        })();
-    }   
-}
+//document.addEventListener('mousemove', (moveEvent)=>{console.log('MOUSE =',moveEvent.pageX, moveEvent.pageY)})
+
+
+
+
+
+
+
+
 
 const cardRanks = {};
 function getSuitColor(_suit){

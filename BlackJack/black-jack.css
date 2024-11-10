@@ -60,7 +60,7 @@
     margin-top: var(--anim-select-dist) !important;
 }
 
-#game[drag-active='true'] .hand[lock=false] .outer-card:hover{/* INSERTION ANIM dont play if the slot is locked*/ 
+body[drag-active='true'] .hand[lock=false] .outer-card:hover{/* INSERTION ANIM dont play if the slot is locked*/ 
     margin-right: var(--anim-insert-dist) !important;
 } 
 #game .hand .outer-card{margin-right: var(--hand-card-offset);}/*CARD IN HAND EFFECT*/
