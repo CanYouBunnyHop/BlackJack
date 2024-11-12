@@ -47,7 +47,7 @@ async function releaseDragInHand(b4ReleaseOut){
     const RELEASE_STATE = {NONE: "None", LEFT_MOST: "L", MIDDLE: "M", RIGHT_MOST: "R"};
     let _lastChildRect = DRAG_RELEASE.LAST_CHILD.getBoundingClientRect();
     let releaseState = (()=>{ //Immediate Invoke, get releaseState
-        let _isMouseRight = DRAG_RELEASE.MPOS.X > _lastChildRect.left;
+        let _isMouseRight = DRAG_RELEASE.MPOS.x > _lastChildRect.left;
         let _isHovSibFirst= DRAG_RELEASE.HOVERED_SIB?DRAG_RELEASE.HOVERED_SIB===DRAG_RELEASE.FIRST_CHILD: false;
         let _isHovSibLast = DRAG_RELEASE.HOVERED_SIB?DRAG_RELEASE.HOVERED_SIB===DRAG_RELEASE.LAST_CHILD : false;
         if((_isMouseRight || _isHovSibLast) && DRAG_RELEASE.ACTIVE_SLOT)

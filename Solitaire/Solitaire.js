@@ -2,7 +2,7 @@ import {currentDeck, resetCardGame, Card, CARD_DATA} from '../modules/PlayingCar
 import Vector2 from '../modules/Vector2.js';
 import { setAllElementWithLogic, getNeighborElsInParent, popRandomFromArr, getCSSDeclaredValue } from '../modules/MyMiscUtil.js';
 import{ requestFrame, timer, restartCSSAnimation } from '../modules/CSSAnimationUtil.js';
-import {startDragChain} from '../modules/MyDraggables.js';
+import {startDrag} from '../modules/MyDraggables.js';
 //free cell //one deck
 //tableus, alternating colors
 //command pattern with undo
@@ -40,7 +40,7 @@ tempSlot.lastChild.appendChild(createCard('♠️', '2'));
 
 window.onload =()=>{ //for testing
     setAllElementWithLogic('.slot', 'mouseover', solitaireSlotLogic);
-    setAllElementWithLogic('.draggable', 'mousedown', (startEvent)=>startDragChain(startEvent, GAME));
+    setAllElementWithLogic('.draggable', 'mousedown', (startEvent)=>startDrag(startEvent, GAME));
 }; 
 
 // function solitaireDraggableLogic(mdownEvent){
