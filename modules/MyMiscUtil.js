@@ -4,12 +4,6 @@ export function setAllElementWithLogic(selector='.className', eventName='mouseen
     let elmnts = document.querySelectorAll(selector);
     [...elmnts].forEach(el=>{el.addEventListener(eventName, logic)});
 }
-
-export function getNeighborElsInParent(selfElement, parentElement){
-    let children = [...parentElement.children];
-    let selfIndex = children.indexOf(selfElement);
-    return {prev: children[selfIndex-1], next: children[selfIndex+1]};
-}
 export function popRandomFromArr(arr=[]){
     let i = Math.floor(Math.random() * arr.length);
     return arr.splice(i, 1)[0];;
