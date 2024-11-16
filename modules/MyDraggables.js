@@ -1,11 +1,12 @@
 import Vector2 from "./Vector2.js";
 import { timer } from "./CSSAnimationUtil.js";
 
-export function setSlotLogic(element, _slotLogic = defaultSlotLogic){element.addEventListener('mouseenter', _slotLogic)};
-export function defaultSlotLogic(event){
+export function slotLogic(event, unhoverEvent='mouseleave'){
     let slot = event.target;
+    let capacity = slot.getAttribute('capacity') ?? Infinity;
+    if(slot.children.length > capacity) return;
     slot.classList.add('active-slot');
-    slot.addEventListener('mouseleave', _event=>{ slot.classList.remove('active-slot') });
+    slot.addEventListener(unhoverEvent, _event=>{ slot.classList.remove('active-slot')});
 }
 export function startDrag(mdownEvent, parentElement, animationTime = 0,
     afterStartDrag = async (_startOut)=>{},
@@ -14,7 +15,8 @@ export function startDrag(mdownEvent, parentElement, animationTime = 0,
 
         const DRAG_TARGET = mdownEvent.target.closest('.draggable');
         const DRAG_START_SLOT = mdownEvent.target.closest('.slot');
-        if(!DRAG_START_SLOT || document.body.getAttribute('transitioning') === 'true') return Promise.reject();
+        const dragLock = (DRAG_TARGET.getAttribute('lock') ?? 'false')==='true';
+        if(!DRAG_START_SLOT || document.body.getAttribute('transitioning') === 'true' || dragLock) return Promise.reject();
 
         document.body.setAttribute('drag-active', true);
         const INITIAL_TRANSITION = DRAG_TARGET.style.transition;
@@ -69,7 +71,7 @@ function onDrag(moveEvent, startOutput){
 }
 async function beforeReleaseDrag(_releaseEvent, startOut){
     const{DRAG_START} = startOut;
-    const ACTIVE_SLOT = document.body.querySelector('.active-slot[lock=false]:not(.dragging)');
+    const ACTIVE_SLOT = document.body.querySelector('.active-slot:not(.dragging)');
     const DESTINATION_SLOT = ACTIVE_SLOT ?? DRAG_START.SLOT; 
     return { //B4RELEASE
         ...startOut,

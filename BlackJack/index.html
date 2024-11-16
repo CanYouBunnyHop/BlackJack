@@ -22,10 +22,10 @@
         <button type="button" onmousedown="hitPButtonLogic()" id="hit-but">Hit</button> <!--Same as tapping the deck, might disable hitting deck-->
         <button type="button" onmousedown="standButtonLogic()"id="stand-but">Stand</button> 
     </div>
-    <div class="hand slot" capacity='-1' lock='true' id="dealer-hand">
+    <div class="hand slot" id="dealer-hand" capacity='0'>
         <div class="slot-start draggable" lock="true"></div> <!--for inserting left most card-->
     </div><!--end dealer-hand-->
-    <div class="hand slot" capacity='-1' lock='false' id="player-hand">
+    <div class="hand slot" id="player-hand">
         <div class="slot-start draggable" lock="true"></div> <!--for inserting left most card-->
     </div><!--end hand-->
     <div class="deck" id="universal-deck"> <!--onmousedown="popCardFromDeck(PLAYER_HAND)"-->

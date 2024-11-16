@@ -5,7 +5,7 @@
 import { currentDeck, resetCardGame, PROTO_CARD } from '../modules/PlayingCards.js';
 import { BaseState, BaseStateMachine } from '../modules/StateMachinePattern.js';
 import Vector2 from '../modules/Vector2.js';
-import { defaultSlotLogic, startDrag } from '../modules/MyDraggables.js';
+import { slotLogic, startDrag } from '../modules/MyDraggables.js';
 import { setAllElementWithLogic, popRandomFromArr, getCSSDeclaredValue } from '../modules/MyMiscUtil.js';
 import { requestFrame, timer, restartCSSAnimation } from '../modules/CSSAnimationUtil.js';
 
@@ -23,9 +23,8 @@ const __OVERLAY_FADE_TIME = getCSSDeclaredValue(GAME, '--overlay-fade-time', tru
 const __ANIM_MOVE_INITIAL_TRANSITION = getCSSDeclaredValue(GAME, '--anim-move-initial-transition', false);
 const HAND_CARD_WIDTH = __CARD_WIDTH + __HAND_CARD_OFFSET;
 //
-// DRAGGABLE RELATED LOGICS // Very difficult to convert to module
+// DRAGGABLE RELATED LOGICS
 //
-//new
 function blackJackStartDrag(mdownEvent){ //Wrapper to add statemachine state
     if(GAME_STATE_MACHINE.currentState === GAME_STATE.playersTurn)
         startDrag(mdownEvent, GAME, __ANIM_MOVE_TIME, afterStartDrag, releaseDragInHand, dragEndTransition);
@@ -149,7 +148,6 @@ async function dragEndTransition(releaseOut){
         GAME_STATE_MACHINE.currentState = GAME_STATE.playersTurn;
     });
 }
-
 function getCardsFromHand(hand){
    return [...hand.children].slice(1, undefined);
 }
@@ -159,7 +157,7 @@ function getCardsFromHand(hand){
 const PLAYER_HAND = GAME.querySelector('#player-hand');
 const DEALER_HAND = GAME.querySelector('#dealer-hand');
 //WHEN PAGE FINISH LOADING //PROBABLY WANT TO USE DEFERED ON THE SCRIPT INSTEAD
-window.onload = setAllElementWithLogic('.slot', 'mouseenter', defaultSlotLogic);
+window.onload = setAllElementWithLogic('.slot', 'mouseenter', (ev)=>slotLogic(ev, 'mouseleave'));
 
 function popCardFromDeck(_targetHand, _deckSelector = '.deck:hover', flipOver=true, isDraggable=true){//TEST
     if(document.body.getAttribute('transitioning') === 'true') return;
