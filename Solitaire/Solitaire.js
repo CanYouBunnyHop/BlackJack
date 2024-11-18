@@ -11,7 +11,6 @@ import {startDrag, slotLogic} from '../modules/MyDraggables.js';
 //52! possible combinations, 
 //out of 8.6 billion deals, 102,075 deals are impossible
 const GAME = document.getElementById('game');
-
 const PROTO_CARD_CONTAINER = document.createElement('div');
 PROTO_CARD_CONTAINER.classList.add('card-container', 'draggable', 'slot'); //set dragging parent to card-container
 
@@ -23,28 +22,92 @@ function createCard(_suit, _number){
     containerClone.setAttribute('number', _number); containerClone._number_ = _number;
     return containerClone;
 }
+function getSlotType(_slot){
+    const SLOT_TYPE = ['cell','foundation','cascade'].find(type=>_slot.getAttribute('slot-type') === type);
+    if (SLOT_TYPE !== undefined) return SLOT_TYPE;
+    else {
+        console.log('INVALID SLOT TYPE', SLOT_TYPE);
+        return 'error';
+    }
+}
+function appendCardToSlot(_slot, _card){
+    const SLOT_TYPE = getSlotType(_slot);
+    _card.setAttribute('slot-type', SLOT_TYPE);  
+    _slot.appendChild(_card);        
+}
 //suits : ['♠️','♣️','♥️','♦️']
 const __ANIM_MOVE_INITIAL_TRANSITION = getCSSDeclaredValue(GAME, '--anim-move-initial-transition', false);
+const __ANIM_MOVE_TIME = getCSSDeclaredValue(GAME, '--anim-move-time', true);
+const __CARD_HEIGHT = getCSSDeclaredValue(GAME, '--card-height', true);
+const __CARD_CASCADE_GAP = getCSSDeclaredValue(GAME,'--card-cascade-gap', true);
+const __SLOT_BORDER_SIZE = getCSSDeclaredValue(GAME,'--slot-border-size', true);
 
 
 function solitaireStartDrag(mdownEvent){
-    //startDrag(mdownEvent, GAME, __ANIM_MOVE_TIME, afterStartDrag, releaseDragInHand, dragEndTransition);
-    startDrag(mdownEvent, GAME)
+    mdownEvent.stopPropagation();
+    startDrag(mdownEvent, GAME, __ANIM_MOVE_TIME, afterStartDrag, releaseDrag, endTransition);
 }
-function releaseDragInCardContainer(){
 
-}
 
 
 //TESTING
 const tempSlot = document.querySelector('.cascade');
-tempSlot.appendChild(createCard('♠️', 'A'));
-tempSlot.lastChild.appendChild(createCard('♠️', '2'));
+appendCardToSlot(tempSlot, createCard('♠️', 'A'));
+appendCardToSlot(tempSlot.lastChild, createCard('♠️', '2'));
+
 
 window.onload =()=>{ //for testing
     setAllElementWithLogic('.slot', 'mouseover', (ev)=>slotLogic(ev, 'mouseout'));
-    setAllElementWithLogic('.draggable', 'mousedown', (startEvent)=>startDrag(startEvent, GAME));
+    setAllElementWithLogic('.draggable', 'mousedown', solitaireStartDrag);
 }; 
+async function afterStartDrag(){}
+async function releaseDrag(b4ReleaseOut){
+    // DRAG_START : {
+    //     SLOT : DRAG_START_SLOT, //mdownEvent.target.closest('.slot');
+    //     POS : new Vector2(_rect.x, _rect.y), 
+    //     MPOS : new Vector2(mdownEvent.pageX, mdownEvent.pageY),
+    //     INDEX : [...DRAG_START_SLOT.children].indexOf(DRAG_TARGET),
+    //     NEIGHBOUR : { L: DRAG_TARGET.previousElementSibling, R: DRAG_TARGET.nextElementSibling}
+    // }
+    // DRAG_RELEASE : {
+    //     MPOS : new Vector2(_releaseEvent.pageX, _releaseEvent.pageY),
+    //     DESTINATION_SLOT, //ACTIVE_SLOT ?? DRAG_START.SLOT; 
+    //     ACTIVE_SLOT, //document.body.querySelector('.active-slot:not(.dragging)');
+    //     HOVERED_SIB : DESTINATION_SLOT?.querySelector('.draggable:hover:not(.dragging)'), 
+    //     FIRST_CHILD : DESTINATION_SLOT?.firstElementChild, 
+    //     LAST_CHILD : DESTINATION_SLOT?.lastElementChild, 
+    // },
+    const {DRAG_START, DRAG_TARGET, IS_SAME_SLOT, DRAG_RELEASE} = b4ReleaseOut;
+    const {DESTINATION_SLOT} = DRAG_RELEASE;
+    //cascade, card-container, cell, foundation
+    const IS_DEST_CARD_CON = DESTINATION_SLOT.classList.contains('card-container');
+    const DESTINATION_SLOT_TYPE = getSlotType(DESTINATION_SLOT);
+    
+    const MOVE_OFFSET = (()=>{
+        const borderOffset = new Vector2(__SLOT_BORDER_SIZE, __SLOT_BORDER_SIZE);
+        switch(DESTINATION_SLOT_TYPE){//Immediate invoke
+            case 'cell': return borderOffset;
+            case 'foundation': return IS_DEST_CARD_CON ? Vector2.zero : borderOffset;
+            case 'cascade': 
+                let _cascadeOffset = __CARD_HEIGHT + __CARD_CASCADE_GAP;
+                return IS_DEST_CARD_CON? new Vector2(0, _cascadeOffset+3): borderOffset;//magic number 3
+    }})();////Immediate invoke ends
+   
+    let _destRect = DESTINATION_SLOT.getBoundingClientRect();
+    const movePos = new Vector2(_destRect.x, _destRect.y); 
+
+    DRAG_TARGET.style.left =`${movePos.x + MOVE_OFFSET.x}px`;
+    DRAG_TARGET.style.top = `${movePos.y + MOVE_OFFSET.y}px`;
+    return {...b4ReleaseOut}
+}
+async function endTransition(releaseOut){
+    const {DRAG_TARGET, DRAG_RELEASE} = releaseOut;
+    const {DESTINATION_SLOT} = DRAG_RELEASE;
+    //append to slot
+    DRAG_TARGET.style.position = 'relative';
+    DRAG_TARGET.style.left = '0px'; DRAG_TARGET.style.top = '0px';
+    appendCardToSlot(DESTINATION_SLOT, DRAG_TARGET);
+}
 
 
 const cardRanks = {};

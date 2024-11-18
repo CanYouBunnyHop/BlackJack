@@ -1,5 +1,5 @@
 import Vector2 from "./Vector2.js";
-import { timer } from "./CSSAnimationUtil.js";
+import { timer, requestFrame} from "./CSSAnimationUtil.js";
 
 export function slotLogic(event, unhoverEvent='mouseleave'){
     let slot = event.target;
@@ -8,33 +8,35 @@ export function slotLogic(event, unhoverEvent='mouseleave'){
     slot.classList.add('active-slot');
     slot.addEventListener(unhoverEvent, _event=>{ slot.classList.remove('active-slot')});
 }
-export function startDrag(mdownEvent, parentElement, animationTime = 0,
+export async function startDrag(mdownEvent, targetParentElement, animationTime = 0,
     afterStartDrag = async (_startOut)=>{},
     releaseDrag = async(_b4ReleaseOut)=>{return {..._b4ReleaseOut}}, 
     endTransition= async(_releaseOut)=>{return {..._releaseOut}}){//start drag chain function
-
         const DRAG_TARGET = mdownEvent.target.closest('.draggable');
-        const DRAG_START_SLOT = mdownEvent.target.closest('.slot');
+        const DRAG_START_SLOT = mdownEvent.target.parentElement.closest('.slot');
         const dragLock = (DRAG_TARGET.getAttribute('lock') ?? 'false')==='true';
         if(!DRAG_START_SLOT || document.body.getAttribute('transitioning') === 'true' || dragLock) return Promise.reject();
 
         document.body.setAttribute('drag-active', true);
         const INITIAL_TRANSITION = DRAG_TARGET.style.transition;
-        DRAG_TARGET.style.transition = `left 0s, top 0s, margin ${animationTime}s`;
-        requestAnimationFrame(()=>{DRAG_TARGET.classList.add('dragging')}); //delayed for css animation
+   
+        requestFrame(()=>{
+            DRAG_TARGET.style.transition = `left 0s, top 0s, margin ${animationTime}s`;
+            DRAG_TARGET.classList.add('dragging');
+        }); //delayed for css animation
 
         let _rect = DRAG_TARGET.getBoundingClientRect();
         const START_OUT = {
             DRAG_TARGET, 
             DRAG_START : {
-                SLOT : DRAG_START_SLOT,
+                SLOT : DRAG_START_SLOT, //mdownEvent.target.closest('.slot');
                 POS : new Vector2(_rect.x, _rect.y), 
                 MPOS : new Vector2(mdownEvent.pageX, mdownEvent.pageY),
                 INDEX : [...DRAG_START_SLOT.children].indexOf(DRAG_TARGET),
                 NEIGHBOUR : { L: DRAG_TARGET.previousElementSibling, R: DRAG_TARGET.nextElementSibling}
             }
         }
-        parentElement.appendChild(DRAG_TARGET);
+        targetParentElement.appendChild(DRAG_TARGET);
         afterStartDrag(START_OUT);
         onDrag(mdownEvent, START_OUT);
         const DRAGGING_REF = (moveEvent) => onDrag(moveEvent, START_OUT);
@@ -46,7 +48,7 @@ export function startDrag(mdownEvent, parentElement, animationTime = 0,
             document.body.setAttribute('drag-active', false);
             document.removeEventListener('mousemove', DRAGGING_REF);
             DRAG_TARGET.style.transition = INITIAL_TRANSITION;
-            DRAG_TARGET.classList.remove('dragging');
+            requestFrame(()=>DRAG_TARGET.classList.remove('dragging'));
             const B4RELEASE_OUT = await beforeReleaseDrag(releaseEvent, START_OUT);
             const RELEASE_OUT = await releaseDrag(B4RELEASE_OUT); //parse in stuff? //Move position here
             await timer(animationTime);
@@ -73,13 +75,14 @@ async function beforeReleaseDrag(_releaseEvent, startOut){
     const{DRAG_START} = startOut;
     const ACTIVE_SLOT = document.body.querySelector('.active-slot:not(.dragging)');
     const DESTINATION_SLOT = ACTIVE_SLOT ?? DRAG_START.SLOT; 
+    console.log(DESTINATION_SLOT);
     return { //B4RELEASE
         ...startOut,
         IS_SAME_SLOT : DESTINATION_SLOT === DRAG_START.SLOT, 
         DRAG_RELEASE : {
             MPOS : new Vector2(_releaseEvent.pageX, _releaseEvent.pageY),
-            DESTINATION_SLOT,
-            ACTIVE_SLOT,
+            DESTINATION_SLOT, //ACTIVE_SLOT ?? DRAG_START.SLOT; 
+            ACTIVE_SLOT, //document.body.querySelector('.active-slot:not(.dragging)');
             HOVERED_SIB : DESTINATION_SLOT?.querySelector('.draggable:hover:not(.dragging)'), 
             FIRST_CHILD : DESTINATION_SLOT?.firstElementChild, 
             LAST_CHILD : DESTINATION_SLOT?.lastElementChild, 

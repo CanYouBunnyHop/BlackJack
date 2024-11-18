@@ -4,4 +4,5 @@ export default class Vector2 {
     subtract(other) { return new Vector2(this.x - other.x, this.y - other.y); }
     scale(factor) { return new Vector2(this.x * factor, this.y * factor); }
     dot(other) { return this.x * other.x + this.y * other.y; }
+    static zero = new Vector2(0,0);
 }

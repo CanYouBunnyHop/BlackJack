@@ -1,12 +1,20 @@
 #game{
     --card-scale : 4;
     --card-cascade-gap : calc(-26px * var(--card-scale));
+    --anim-time-scale : 0.3;
+    --anim-move-time : calc(1s * var(--anim-time-scale));
+    --anim-move-initial-transition : left var(--anim-move-time), top var(--anim-move-time);
+    --slot-border-size : 4px;   
 }
+.draggable{transition: var(--anim-move-initial-transition);}
 #game .slot{width: var(--card-width); height: var(--card-height);}
 .cell.slot, .foundation.slot{display: inline-block; margin: 2%;}
 
 /*debug*/
-.cell.slot, .foundation.slot, .cascade.slot{border: 3px solid whitesmoke; border-radius: 5%;}
+.cell.slot, .foundation.slot, .cascade.slot{ 
+    border: var(--slot-border-size) solid whitesmoke; 
+    border-radius: 5%;
+}
 
 #game .top-row{
     display: grid;
@@ -26,7 +34,7 @@
     display: flex; width: auto;
     justify-content: center;
 }
-#game .cascade{width: var(--card-width); height: var(--card-height);
+#game .cascade.slot{width: var(--card-width); height: var(--card-height);
     margin-left: 1%; margin-right: 1%;
     flex-shrink: 0;
 }
@@ -37,6 +45,7 @@
     outline: rgb(17, 255, 0) solid 1px;
     display: inline-block;
 } */
+
 #game .card-container .card-container{ /*when card-container is within a card-container*/
     margin-top: var(--card-cascade-gap);
 }

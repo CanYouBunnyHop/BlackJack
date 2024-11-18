@@ -44,7 +44,7 @@
     }
     #game :not(.deck) .back-face{transform: rotateY(180deg);}
     #game .back-face{/*STYLES FOR CARD BACK*/
-        border: 15px solid whitesmoke;
+        border: 12px solid whitesmoke;
         background-color: whitesmoke;
         display: flex;
         justify-content: center;
