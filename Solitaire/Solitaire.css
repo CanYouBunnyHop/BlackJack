@@ -39,15 +39,17 @@
     flex-shrink: 0;
 }
 
-
 /* testing will be removed
 #game .cascade .cascade-start{width: var(--card-width); height: 30px;
     outline: rgb(17, 255, 0) solid 1px;
     display: inline-block;
 } */
 
-#game .card-container .card-container{ /*when card-container is within a card-container*/
+#game .card-container .card-container[slot-type="cascade"]{ /*when card-container is within a card-container*/
     margin-top: var(--card-cascade-gap);
+}
+#game .card-container .card-container[slot-type="foundation"]{
+    margin-top: calc(-1 * var(--card-height));
 }
 #game .outer-card{
     pointer-events: none; /*we are using card-container for pointer events*/

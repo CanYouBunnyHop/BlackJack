@@ -3,6 +3,7 @@ import Vector2 from '../modules/Vector2.js';
 import { setAllElementWithLogic, popRandomFromArr, getCSSDeclaredValue } from '../modules/MyMiscUtil.js';
 import{ requestFrame, timer, restartCSSAnimation } from '../modules/CSSAnimationUtil.js';
 import {startDrag, slotLogic} from '../modules/MyDraggables.js';
+import { Memento, Caretaker } from '../modules/UndoPattern.js';
 //free cell //one deck
 //tableus, alternating colors
 //command pattern with undo
@@ -35,20 +36,19 @@ function appendCardToSlot(_slot, _card){
     _card.setAttribute('slot-type', SLOT_TYPE);  
     _slot.appendChild(_card);        
 }
-//suits : ['♠️','♣️','♥️','♦️']
+
 const __ANIM_MOVE_INITIAL_TRANSITION = getCSSDeclaredValue(GAME, '--anim-move-initial-transition', false);
 const __ANIM_MOVE_TIME = getCSSDeclaredValue(GAME, '--anim-move-time', true);
 const __CARD_HEIGHT = getCSSDeclaredValue(GAME, '--card-height', true);
 const __CARD_CASCADE_GAP = getCSSDeclaredValue(GAME,'--card-cascade-gap', true);
 const __SLOT_BORDER_SIZE = getCSSDeclaredValue(GAME,'--slot-border-size', true);
 
+const MOVE_MANAGER = new Caretaker();
 
 function solitaireStartDrag(mdownEvent){
     mdownEvent.stopPropagation();
     startDrag(mdownEvent, GAME, __ANIM_MOVE_TIME, afterStartDrag, releaseDrag, endTransition);
 }
-
-
 
 //TESTING
 const tempSlot = document.querySelector('.cascade');
@@ -60,25 +60,15 @@ window.onload =()=>{ //for testing
     setAllElementWithLogic('.slot', 'mouseover', (ev)=>slotLogic(ev, 'mouseout'));
     setAllElementWithLogic('.draggable', 'mousedown', solitaireStartDrag);
 }; 
-async function afterStartDrag(){}
+async function afterStartDrag(startOut){
+    const{DRAG_START, DRAG_TARGET} = startOut;
+}
 async function releaseDrag(b4ReleaseOut){
-    // DRAG_START : {
-    //     SLOT : DRAG_START_SLOT, //mdownEvent.target.closest('.slot');
-    //     POS : new Vector2(_rect.x, _rect.y), 
-    //     MPOS : new Vector2(mdownEvent.pageX, mdownEvent.pageY),
-    //     INDEX : [...DRAG_START_SLOT.children].indexOf(DRAG_TARGET),
-    //     NEIGHBOUR : { L: DRAG_TARGET.previousElementSibling, R: DRAG_TARGET.nextElementSibling}
-    // }
-    // DRAG_RELEASE : {
-    //     MPOS : new Vector2(_releaseEvent.pageX, _releaseEvent.pageY),
-    //     DESTINATION_SLOT, //ACTIVE_SLOT ?? DRAG_START.SLOT; 
-    //     ACTIVE_SLOT, //document.body.querySelector('.active-slot:not(.dragging)');
-    //     HOVERED_SIB : DESTINATION_SLOT?.querySelector('.draggable:hover:not(.dragging)'), 
-    //     FIRST_CHILD : DESTINATION_SLOT?.firstElementChild, 
-    //     LAST_CHILD : DESTINATION_SLOT?.lastElementChild, 
-    // },
-    const {DRAG_START, DRAG_TARGET, IS_SAME_SLOT, DRAG_RELEASE} = b4ReleaseOut;
-    const {DESTINATION_SLOT} = DRAG_RELEASE;
+    const {DRAG_START, DRAG_TARGET, DRAG_RELEASE, IS_SAME_SLOT} = b4ReleaseOut;
+    const {DESTINATION_SLOT} = DRAG_RELEASE;   
+    //save start position if move is valid and is not same slot
+    if(!IS_SAME_SLOT)MOVE_MANAGER.remember(new Memento(DRAG_TARGET, DRAG_START.POS, DRAG_START.SLOT));
+
     //cascade, card-container, cell, foundation
     const IS_DEST_CARD_CON = DESTINATION_SLOT.classList.contains('card-container');
     const DESTINATION_SLOT_TYPE = getSlotType(DESTINATION_SLOT);
@@ -98,6 +88,7 @@ async function releaseDrag(b4ReleaseOut){
 
     DRAG_TARGET.style.left =`${movePos.x + MOVE_OFFSET.x}px`;
     DRAG_TARGET.style.top = `${movePos.y + MOVE_OFFSET.y}px`;
+
     return {...b4ReleaseOut}
 }
 async function endTransition(releaseOut){
@@ -108,7 +99,29 @@ async function endTransition(releaseOut){
     DRAG_TARGET.style.left = '0px'; DRAG_TARGET.style.top = '0px';
     appendCardToSlot(DESTINATION_SLOT, DRAG_TARGET);
 }
+async function moveCardWithTransition(_card, _movePosition, _destSlot){
+    //console.log(_movePosition);
+    let startRect =  _card.getBoundingClientRect();
+    let startPos = new Vector2(startRect.x, startRect.y);
+    _card.style.position = 'fixed';
+    _card.style.left = `${startPos.x}px`;
+    _card.style.top = `${startPos.y}px`;
+    GAME.appendChild(_card);
+    await requestFrame();
+    _card.style.left = `${_movePosition.x}px`;
+    _card.style.top = `${_movePosition.y}px`;
+    await timer(__ANIM_MOVE_TIME);
+    _card.style.position = 'relative';
+    _card.style.left = '0px';
+    _card.style.top = '0px';
+    appendCardToSlot(_destSlot, _card);
+}
 
+//TESTING
+window.testUndo = ()=>{
+    let moveUndo = MOVE_MANAGER.undo();
+    moveCardWithTransition(...moveUndo.data);
+} 
 
 const cardRanks = {};
 function getSuitColor(_suit){
@@ -118,8 +131,10 @@ function getSuitColor(_suit){
         case '♥️': case'♦️': return 'red';
     }
 }
+
+
 //
-//Util
+//Util 2
 //
 class LinkedListItem{
     constructor(_self, _next = null, _prev = null){
