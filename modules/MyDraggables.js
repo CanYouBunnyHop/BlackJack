@@ -4,18 +4,20 @@ import { timer, requestFrame} from "./CSSAnimationUtil.js";
 export function slotLogic(event, unhoverEvent='mouseleave'){
     let slot = event.target;
     let capacity = slot.getAttribute('capacity') ?? Infinity;
-    if(slot.children.length > capacity) return;
+    if(slot.children.length >= capacity) return;
     slot.classList.add('active-slot');
     slot.addEventListener(unhoverEvent, _event=>{ slot.classList.remove('active-slot')});
 }
 export async function startDrag(mdownEvent, targetParentElement, animationTime = 0,
     afterStartDrag = async (_startOut)=>{},
     releaseDrag = async(_b4ReleaseOut)=>{return {..._b4ReleaseOut}}, 
-    endTransition= async(_releaseOut)=>{return {..._releaseOut}}){//start drag chain function
+    endTransition= async(_releaseOut)=>{return {..._releaseOut}}, _allowsDrag = true){//start drag chain function
         const DRAG_TARGET = mdownEvent.target.closest('.draggable');
         const DRAG_START_SLOT = mdownEvent.target.parentElement.closest('.slot');
+
         const dragLock = (DRAG_TARGET.getAttribute('lock') ?? 'false')==='true';
-        if(!DRAG_START_SLOT || document.body.getAttribute('transitioning') === 'true' || dragLock) return Promise.reject();
+        if(!DRAG_START_SLOT || document.body.getAttribute('transitioning') === 'true' || dragLock || !_allowsDrag) 
+            return Promise.reject();
 
         document.body.setAttribute('drag-active', true);
         const INITIAL_TRANSITION = DRAG_TARGET.style.transition;
@@ -75,7 +77,7 @@ async function beforeReleaseDrag(_releaseEvent, startOut){
     const{DRAG_START} = startOut;
     const ACTIVE_SLOT = document.body.querySelector('.active-slot:not(.dragging)');
     const DESTINATION_SLOT = ACTIVE_SLOT ?? DRAG_START.SLOT; 
-    console.log(DESTINATION_SLOT);
+    //console.log(DESTINATION_SLOT);
     return { //B4RELEASE
         ...startOut,
         IS_SAME_SLOT : DESTINATION_SLOT === DRAG_START.SLOT, 

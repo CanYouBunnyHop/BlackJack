@@ -333,10 +333,10 @@ async function resetCardGameWithTransition(){
 function getBlackJackCardPoints(hand){ //not the most efficient way to do calculation, but most managable
     let aceCounter = 0;
     function getCardPoint(_cardEl){
-        switch(_cardEl._number_){
+        switch(_cardEl._rank_){
             case 'A': aceCounter++; return 11; //Return 11 for now, will -10 later
             case 'J': case 'Q': case 'K': return 10;
-            default: return parseInt(_cardEl._number_);
+            default: return parseInt(_cardEl._rank_);
         }
     }
     const cardElements = getCardsFromHand(hand); //returns all the cards, minus the starting child
