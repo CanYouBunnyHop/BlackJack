@@ -4,6 +4,7 @@ import { setAllElementWithLogic, popRandomFromArr, getCSSDeclaredValue } from '.
 import{ requestFrame, timer, restartCSSAnimation } from '../modules/CSSAnimationUtil.js';
 import {startDrag, slotLogic} from '../modules/MyDraggables.js';
 import { Memento, Caretaker } from '../modules/UndoPattern.js';
+import LinkedList from '../modules/LinkedList.js';
 //free cell //one deck
 //tableus, alternating colors
 //command pattern with undo
@@ -28,14 +29,109 @@ import { Memento, Caretaker } from '../modules/UndoPattern.js';
 // This applies as long as you are not moving cards into the actual empty column, 
 // in which case you are unable to take advantage of the doubling.
 
+//#region globals
 const GAME = document.getElementById('game');
 const PROTO_CARD_CONTAINER = document.createElement('div');
 PROTO_CARD_CONTAINER.classList.add('card-container', 'draggable', 'slot'); //set dragging parent to card-container
+//CSS
+const __ANIM_MOVE_TIME = getCSSDeclaredValue(GAME, '--anim-move-time', true);
+const __CARD_HEIGHT = getCSSDeclaredValue(GAME, '--card-height', true);
+const __CARD_CASCADE_GAP = getCSSDeclaredValue(GAME,'--card-cascade-gap', true);
+const __SLOT_BORDER_SIZE = getCSSDeclaredValue(GAME,'--slot-border-size', true);
 
+const MOVE_MANAGER = new Caretaker();
+const SOLITAIRE_DECK = createSolitaireDeck();
+//node lists 
+const FOUNDATIONS = GAME.querySelectorAll('.foundation.slot.ancestor');
+const CASCADES = GAME.querySelectorAll('.cascade.slot.ancestor');
+const CELLS = GAME.querySelectorAll('.cell.slot.ancestor');
+//const TABLEAUS = { 
+    //using default html's implementation instead?
+    //next = lastElementChild, check classlist contains ? card-container
+    //prev = parentElement, check classlist contains ? slot ???
+    //head = closest ancestor's lastElementChild ?
+    //create getters
+    //     0: new LinkedList(), 1: new LinkedList(),
+    //     2: new LinkedList(), 3: new LinkedList(),
+    //     4: new LinkedList(), 5: new LinkedList(),
+    //     6: new LinkedList(), 7: new LinkedList(),
+//}
+//add getters
+[...CASCADES, ...FOUNDATIONS, ...CELLS].forEach(el=>{
+    Object.defineProperties(el,{
+        _head_ : { get : ()=>{
+            return el.lastElementChild?.classList.contains('card-container') ? el.lastElementChild : null;
+        }},
+    });
+    Object.defineProperties(el,{
+        _tail_ : { get : ()=>{
+            let curCard = el._head_;
+            while(curCard){curCard = curCard._next_;}
+            return curCard;
+        }},
+    });
+})
+//#endregion
+
+//
+//#region Freecell Main
+//
+window.onload =()=>{
+    dealCards();
+    //It probably will never happen but it's possible starting deal is also winning deal
+    FOUNDATIONS.forEach(el=>el._rankUp_='A'); //foundations only take Aces at the beginning
+    setAllElementWithLogic('.slot', 'mouseover', (ev)=>slotLogic(ev, 'mouseout'));
+    setAllElementWithLogic('.draggable', 'mousedown', solitaireStartDrag);
+};
+//Undo button 
+window.undoButton = ()=>{
+    let moveUndo = MOVE_MANAGER.undo();
+    moveCardWithTransition(...moveUndo.data);
+} 
+function createSolitaireDeck(){
+    let deck = [];
+    for(let suit of CARD_DATA.suits){
+        for(let rank of CARD_DATA.ranks){
+            deck.push(createCard(suit, rank));
+        }
+    }
+    return deck;
+}
+////['♠️','♣️','♥️','♦️']
+function dealCards(){
+    //const cascadeHeads = [...CASCADES];
+    let cascadeEnds = [...CASCADES];
+    let i = 0;
+    while(SOLITAIRE_DECK.length > 0){
+        if(i > cascadeEnds.length-1) i = 0; //loop around back to start
+        let randomCard = popRandomFromArr(SOLITAIRE_DECK);
+        Object.defineProperties(randomCard, {
+            _prev_ : {get : ()=>{
+                return randomCard.parentElement.classList.contains('card-container') ? 
+                randomCard.parentElement : null;
+            }},
+             _next_ : {get : ()=>{
+                 return randomCard.lastElementChild.classList.contains('card-container') ? 
+                 randomCard.lastElementChild : null;
+             }},
+             _ancestor_ : {get : ()=>{
+                return randomCard.closest('.ancestor');
+             }} 
+        });
+        //track the tableaus
+        //TABLEAUS[i].appendItem(randomCard);
+        //easier to get tabaleau later
+        //randomCard.setAttribute('tableau-id', i);
+        appendCardToSlot(cascadeEnds[i], randomCard);
+        cascadeEnds[i] = randomCard; //change target slot to the card
+        i++;
+    }
+    //console.log(TABLEAUS);
+}
 function createCard(_suit, _rank){
     let containerClone = PROTO_CARD_CONTAINER.cloneNode(true);
     containerClone.appendChild(new Card(_suit, _rank).createElement());
-    //DEBUG
+    //DEBUG SET ATTRIBUTE
     containerClone.setAttribute('suit', _suit); containerClone._suit_ = _suit;
     containerClone.setAttribute('rank', _rank); containerClone._rank_ = _rank;
 
@@ -47,8 +143,18 @@ function createCard(_suit, _rank){
     containerClone.setAttribute('capacity', 2); //2 because holds 1 outer-card and 1 card-container
     return containerClone;
 }
+function winCondition(){
+    let cascades = [...CASCADES];
+    let foundations = [...FOUNDATIONS];
+    if(cascades.every(el=>!el._validCascade_)) return;
+    
+    //move every card upwards to foundation
+
+}
+//#endregion Freecell Main
+
 //
-// For calculating valid moves
+//#region Freecell Algo
 //
 function getSlotType(_slot){
     const SLOT_TYPE = ['cell','foundation','cascade'].find(type=>_slot.getAttribute('slot-type') === type);
@@ -56,7 +162,7 @@ function getSlotType(_slot){
     console.error('INVALID SLOT TYPE', SLOT_TYPE);
     return 'error';
 }
-function getInnerCount(_startSlot){
+function getInnerCount(_startSlot){ //Turn to get LinkedList
     //go outwards then go inwards
     let curSlot = _startSlot;
     let count = _startSlot.classList.contains('ancestor') ? -1 : 0;
@@ -67,7 +173,7 @@ function getInnerCount(_startSlot){
     }
     return count;
 }
-function appendCardToSlot(_slot, _card){
+function appendCardToSlot(_slot, _card){ //TODO: CHANGE TO USE LINKED LIST
     const SLOT_TYPE = getSlotType(_slot);
     //set attribute need to also travel inwards
     let curCard = _card;
@@ -77,8 +183,29 @@ function appendCardToSlot(_slot, _card){
     }
     _slot.appendChild(_card);        
 }
-function isValidCascade(_startCard){
-    let curCard = _startCard;
+function isValidCascade(_startSlot){ //TODO: change to use linked list?
+    // let tableauID = _startCard.getAttribute('tableau-id'); //?? _startCard.id; 
+    // let startIndex = TABLEAUS[tableauID].indexOf(_startCard);
+    // let curCascade = TABLEAUS[tableauID].splitListAt(startIndex); //this is inclusive
+    // console.log(startIndex);
+    // let curCard = curCascade.head; let isValid = true;
+    // while(curCard){
+    //     let curColor = getSuitColor(curCard.data._suit_);
+    //     let nexColor = getSuitColor(curCard.next?.data._suit_);
+    //     let isNextOppositeColor = curColor !== nexColor;
+    //     let isNextRankDown = curCard.next?.data._rank_ === curCard.data._rankDown_;
+    //     if(!isNextOppositeColor && !isNextRankDown){
+    //         isValid = false; break;
+    //     } 
+    //     curCard = curCard.next;
+    // }
+    // return {
+    //     isValid, 
+    //     cascade : curCascade
+    // }
+
+    //old
+    let curCard = _startSlot;
     let output = true;
     let continueLoop = (cur, next)=>{
         if(!next.classList.contains('card-container')) return false;
@@ -95,75 +222,29 @@ function isValidCascade(_startCard){
     return output;
 }
 function getAllowedDragCount(){
-    const cells = GAME.querySelectorAll('.cell.slot.ancestor');
-    const cascades = GAME.querySelectorAll('.cascade.slot.ancestor');
-    let emptyCells = [...cells].filter(cell=>!cell.lastElementChild?.classList.contains('card-container'), 0);
-    let emptyCascades = [...cascades].filter(cas=>!cas.lastElementChild?.classList.contains('card-container'),0);
+    let emptyCells = [...CELLS].filter(cell=>!cell.lastElementChild?.classList.contains('card-container'), 0);
+    let emptyCascades = [...CASCADES].filter(cas=>!cas.lastElementChild?.classList.contains('card-container'),0);
     let canMove = emptyCells.length + emptyCascades.length;
-    //console.log(emptyCells, emptyCascades);
-    if(emptyCascades.length >= 1) return canMove * 2;
+    if(emptyCascades.length >= 1) return canMove * 2; //if has empty column advantage
     return canMove + 1;
 }
+//#endregion
+
 //
-// FreeCell Logics
+//#region Drag Logics
 //
-//const __ANIM_MOVE_INITIAL_TRANSITION = getCSSDeclaredValue(GAME, '--anim-move-initial-transition', false);
-const __ANIM_MOVE_TIME = getCSSDeclaredValue(GAME, '--anim-move-time', true);
-const __CARD_HEIGHT = getCSSDeclaredValue(GAME, '--card-height', true);
-const __CARD_CASCADE_GAP = getCSSDeclaredValue(GAME,'--card-cascade-gap', true);
-const __SLOT_BORDER_SIZE = getCSSDeclaredValue(GAME,'--slot-border-size', true);
-
-const MOVE_MANAGER = new Caretaker();
-const SOLITAIRE_DECK = createSolitaireDeck(); 
-window.onload =()=>{
-    dealCards();
-    const foundations = document.querySelectorAll('.foundation.slot.ancestor');
-    foundations.forEach(el=>el._rankUp_='A');
-    setAllElementWithLogic('.slot', 'mouseover', (ev)=>slotLogic(ev, 'mouseout'));
-    setAllElementWithLogic('.draggable', 'mousedown', solitaireStartDrag);
-};
-function createSolitaireDeck(){
-    let deck = [];
-    for(let suit of CARD_DATA.suits){
-        for(let rank of CARD_DATA.ranks){
-            deck.push(createCard(suit, rank));
-        }
-    }
-    return deck;
-}
-//TESTING DEAL//['♠️','♣️','♥️','♦️']
-function dealCards(){
-    let cascades = [...GAME.querySelectorAll('.cascade.slot.ancestor')];
-    let i = 0;
-    while(SOLITAIRE_DECK.length > 0){
-        if(i > cascades.length-1) i = 0; //loop around back to start
-        let randomCard = popRandomFromArr(SOLITAIRE_DECK);
-        appendCardToSlot(cascades[i], randomCard);
-        cascades[i] = randomCard; //change target slot to the card
-        i++;
-    }
-}
-
-// const tempSlot = document.querySelector('.cascade.slot.ancestor');
-// appendCardToSlot(tempSlot, createCard('♠️', 'A'));
-// appendCardToSlot(tempSlot.lastChild, createCard('♠️', '2'));
-// appendCardToSlot(tempSlot.lastChild.lastChild, createCard('♠️', '3'));
-// appendCardToSlot(tempSlot.lastChild.lastChild.lastChild, createCard('♥️', '2'));
-
-
-
 function solitaireStartDrag(mdownEvent){
     mdownEvent.stopPropagation();
     let dTarget = mdownEvent.target.closest('.draggable');
-    
     let dragCount = getInnerCount(dTarget);
     let allowedDragCount = getAllowedDragCount();
-
     let allowDrag = isValidCascade(dTarget) && dragCount <= allowedDragCount;
-    startDrag(mdownEvent, GAME, __ANIM_MOVE_TIME, ()=>{} , releaseDrag, ()=>{} , allowDrag);
+    startDrag(mdownEvent, GAME, __ANIM_MOVE_TIME, afterStartDrag , releaseDrag, endTransition, allowDrag);
 }
-
-
+async function afterStartDrag(_startOut) {
+    const {DRAG_TARGET} = _startOut;
+    return {..._startOut};
+}
 async function releaseDrag(b4ReleaseOut){
     //need to somehow prevent drag if cascade down is not valid
     const {DRAG_START, DRAG_TARGET, IS_SAME_SLOT} = b4ReleaseOut;
@@ -191,8 +272,7 @@ async function releaseDrag(b4ReleaseOut){
                 return isRankDown && isDiffColor && dragCount <= allowedDragCount;
             case _: return false;
         }
-    })(); 
-    console.log('VALID MOVE',IS_VALID_MOVE);
+    })(); //console.log('VALID MOVE',IS_VALID_MOVE);
 
     const NEW_DESTINATION_SLOT = IS_VALID_MOVE ? dest : DRAG_START.SLOT;
     //save start position if move is valid and is not same slot
@@ -214,9 +294,13 @@ async function releaseDrag(b4ReleaseOut){
     let _destRect = NEW_DESTINATION_SLOT.getBoundingClientRect();
     const MOVE_POS = new Vector2(_destRect.x, _destRect.y).add(MOVE_OFFSET); 
     moveCardWithTransition(DRAG_TARGET, MOVE_POS, NEW_DESTINATION_SLOT);
-    return {...b4ReleaseOut, NEW_DESTINATION_SLOT}
+
+    const START_CAS_ANCESTOR = DRAG_START.SLOT.closest('.cascade.slot.ancestor');
+    const DEST_CAS_ANCESTOR = NEW_DESTINATION_SLOT.closest('.cascade.slot.ancestor');
+    return {...b4ReleaseOut, NEW_DESTINATION_SLOT, START_CAS_ANCESTOR, DEST_CAS_ANCESTOR}
 }
-async function moveCardWithTransition(_card, _movePosition, _destSlot){
+//NOTE: can move to draggable module
+async function moveCardWithTransition(_card, _movePosition, _destSlot){ 
     let startRect =  _card.getBoundingClientRect();
     let startPos = new Vector2(startRect.x, startRect.y);
     _card.style.position = 'fixed';
@@ -233,108 +317,19 @@ async function moveCardWithTransition(_card, _movePosition, _destSlot){
     _card.style.top = '0px';
     appendCardToSlot(_destSlot, _card);
 }
+async function endTransition(_releaseOut){//after transition ends
+    const{START_CAS_ANCESTOR, DEST_CAS_ANCESTOR} = _releaseOut;
+    // if(START_CAS_ANCESTOR)
+    //     START_CAS_ANCESTOR._validCascade_ = isValidCascade(START_CAS_ANCESTOR);
+    // if(DEST_CAS_ANCESTOR)
+    //     DEST_CAS_ANCESTOR._validCascade_ = isValidCascade(DEST_CAS_ANCESTOR);
 
-//TESTING
-window.testUndo = ()=>{
-    let moveUndo = MOVE_MANAGER.undo();
-    moveCardWithTransition(...moveUndo.data);
-} 
-
-
-
+    //check if all cascades are valid, start to move them to foundation one by one
+}
+//#endregion
 
 //
-//Util 2
+//#region Util 2
 //
-class LinkedListItem{
-    constructor(_self, _next = null, _prev = null){
-        this.self = _self;
-        this.next = _next;
-        this.prev = _prev;
-    }
-}
-class LinkedList{
-    constructor(){
-        this.head = null;
-        this.length = 0;
-    }
-    appendItem(_data){
-        let newItem = new LinkedListItem(_data);
-        if(!this.head) {
-            this.head = newItem;
-        }
-        else {
-            let cur = this.head;
-            while(cur.next){cur = cur.next;}//find next available space
-            cur.next = newItem; //current item next is new item
-            newItem.prev = cur; //newItem's prev is current
-        }
-        this.length++;
-    }
-    removeItem(_position){
-        if(_position < 0 || _position > this.length - 1) {
-            throw new Error("Invalid index, Out of bounds");
-        }
-        let cur = this.head;
-        let prev = null;
-        for (let i = 0; i < _position; i++){//get to the target index position
-            prev = cur; //current becomes previous
-            cur = cur.next; //next becomes current
-        }
-        if(_position === 0){ this.head = cur.next;}
-        else { prev.next = cur.next; }
-        cur.next.prev = prev;
-        this.length--;
-    }
-    insertItem(_position, _data){
-        let newItem = new LinkedListItem(_data);
-        //array pushing everything else back
-        if(_position < 0 || _position > this.length - 1) {
-            throw new Error("Invalid index, Out of bounds");
-        }
-        let cur = this.head;
-        let prev = null;
-        for (let i = 0; i < _position; i++){//get to the target index position
-            prev = cur; //current becomes previous
-            cur = cur.next; //next becomes current
-        }
-        if(_position === 0){ this.head = newItem;} //new head
-        prev.next = newItem; cur.prev = newItem; 
-        newItem.prev = prev;
-        newItem.next = cur;
-        this.length++;
-    }
-    searchAt(_position){
-        if(_position < 0 || _position > this.length - 1) {
-            throw new Error("Invalid index, Out of bounds");
-        }
-        let cur = this.head;
-        for (let i = 0; i < _position; i++){//get to the target index position
-            cur = cur.next; //next becomes current
-        }
-        return cur;
-    }
-    indexOf(_data){
-        let cur = this.head;
-        let index = 0;
-        while(cur && cur.self !== _data){
-            cur = cur.next;
-            index++;
-        }
-        if(cur && cur.self === _data) return index;
-        else return -1;
-    }
-    static arrToLinkedList(_arr){
-        let newLinkedList = new LinkedList();
-        for(let item of _arr){newLinkedList.appendItem(item)};
-        return newLinkedList;
-    }
-    static toArray(){
-        let arr = [];
-        let cur = this.head;
-        while(cur !== null){
-            arr.push(cur);
-        }
-        return arr;
-    }
-}
+
+//#endregion

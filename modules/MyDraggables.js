@@ -9,7 +9,7 @@ export function slotLogic(event, unhoverEvent='mouseleave'){
     slot.addEventListener(unhoverEvent, _event=>{ slot.classList.remove('active-slot')});
 }
 export async function startDrag(mdownEvent, targetParentElement, animationTime = 0,
-    afterStartDrag = async (_startOut)=>{},
+    afterStartDrag = async (_startOut)=>{return {..._startOut}},
     releaseDrag = async(_b4ReleaseOut)=>{return {..._b4ReleaseOut}}, 
     endTransition= async(_releaseOut)=>{return {..._releaseOut}}, _allowsDrag = true){//start drag chain function
         const DRAG_TARGET = mdownEvent.target.closest('.draggable');
@@ -31,7 +31,7 @@ export async function startDrag(mdownEvent, targetParentElement, animationTime =
         const START_OUT = {
             DRAG_TARGET, 
             DRAG_START : {
-                SLOT : DRAG_START_SLOT, //mdownEvent.target.closest('.slot');
+                SLOT : DRAG_START_SLOT,
                 POS : new Vector2(_rect.x, _rect.y), 
                 MPOS : new Vector2(mdownEvent.pageX, mdownEvent.pageY),
                 INDEX : [...DRAG_START_SLOT.children].indexOf(DRAG_TARGET),
@@ -47,6 +47,7 @@ export async function startDrag(mdownEvent, targetParentElement, animationTime =
         const ON_MOUSE_UP_REF = onMouseUp;
         document.addEventListener('mouseup', ON_MOUSE_UP_REF);
         async function onMouseUp(releaseEvent){
+            document.removeEventListener('mouseup', ON_MOUSE_UP_REF);
             document.body.setAttribute('drag-active', false);
             document.removeEventListener('mousemove', DRAGGING_REF);
             DRAG_TARGET.style.transition = INITIAL_TRANSITION;
@@ -56,11 +57,10 @@ export async function startDrag(mdownEvent, targetParentElement, animationTime =
             await timer(animationTime);
             await endTransition(RELEASE_OUT); //parse in stuff
             document.body.setAttribute('transitioning', false);
-            document.removeEventListener('mouseup', ON_MOUSE_UP_REF);
         } 
 }
-function onDrag(moveEvent, startOutput){
-    const{DRAG_TARGET, DRAG_START} = startOutput;
+function onDrag(moveEvent, _startOut){
+    const{DRAG_TARGET, DRAG_START} = _startOut;
     let curMPos = new Vector2(moveEvent.pageX, moveEvent.pageY);
     let mPosDelta = curMPos.subtract(DRAG_START.MPOS);
     let followPos = DRAG_START.POS.add(mPosDelta);
@@ -73,16 +73,16 @@ function onDrag(moveEvent, startOutput){
         document.body.setAttribute('transitioning', true);
     else document.body.setAttribute('transitioning', false);
 }
-async function beforeReleaseDrag(_releaseEvent, startOut){
-    const{DRAG_START} = startOut;
+async function beforeReleaseDrag(releaseEvent, _startOut){
+    const{DRAG_START} = _startOut;
     const ACTIVE_SLOT = document.body.querySelector('.active-slot:not(.dragging)');
     const DESTINATION_SLOT = ACTIVE_SLOT ?? DRAG_START.SLOT; 
     //console.log(DESTINATION_SLOT);
     return { //B4RELEASE
-        ...startOut,
+        ..._startOut,
         IS_SAME_SLOT : DESTINATION_SLOT === DRAG_START.SLOT, 
         DRAG_RELEASE : {
-            MPOS : new Vector2(_releaseEvent.pageX, _releaseEvent.pageY),
+            MPOS : new Vector2(releaseEvent.pageX, releaseEvent.pageY),
             DESTINATION_SLOT, //ACTIVE_SLOT ?? DRAG_START.SLOT; 
             ACTIVE_SLOT, //document.body.querySelector('.active-slot:not(.dragging)');
             HOVERED_SIB : DESTINATION_SLOT?.querySelector('.draggable:hover:not(.dragging)'), 

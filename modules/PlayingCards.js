@@ -97,7 +97,7 @@ export function getSuitColor(_suit){
     switch(_suit){
         case '♠️': case '♣️': return 'black';
         case '♥️': case'♦️': return 'red';
-        default: console.error('Invalid Input : Input is not a suit emoji'); break;
+        //default: console.error('Invalid Input : Input is not a suit emoji'); break;
     }
 }
 export function getSuitsWithOppositeColor(_suit, _returnsOpposite = true){

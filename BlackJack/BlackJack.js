@@ -40,6 +40,7 @@ async function afterStartDrag(startOut) {
             DRAG_START.NEIGHBOUR.R.style.transition = `${__ANIM_MOVE_INITIAL_TRANSITION}`;
         })
     };
+    return {...startOut};
 }
 async function releaseDragInHand(b4ReleaseOut){
     const { DRAG_TARGET, DRAG_START, IS_SAME_SLOT, DRAG_RELEASE } = b4ReleaseOut;
