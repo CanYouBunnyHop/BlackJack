@@ -25,7 +25,7 @@
 
 /*debug*/
 .cells-row{ background-color: rgb(89, 113, 88);}
-.foundation-row{ background-color: rgb(123, 139, 143);}
+.foundation-row{ background-color: rgb(89, 113, 88);}
 
 #game .cascade-row{
     display: flex; width: auto;

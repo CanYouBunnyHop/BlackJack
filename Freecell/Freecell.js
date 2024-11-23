@@ -217,8 +217,6 @@ async function releaseDrag(b4ReleaseOut){
     return {...b4ReleaseOut, NEW_DESTINATION_SLOT}
 }
 async function moveCardWithTransition(_card, _movePosition, _destSlot){
-    if(document.body.getAttribute('transitioning')==='true') return
-    document.body.setAttribute('transitioning', 'true');
     let startRect =  _card.getBoundingClientRect();
     let startPos = new Vector2(startRect.x, startRect.y);
     _card.style.position = 'fixed';
@@ -234,7 +232,6 @@ async function moveCardWithTransition(_card, _movePosition, _destSlot){
     _card.style.left = '0px';
     _card.style.top = '0px';
     appendCardToSlot(_destSlot, _card);
-    requestFrame(()=>document.setAttribute('transitioning', 'false'));
 }
 
 //TESTING
