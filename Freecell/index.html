@@ -11,30 +11,33 @@
 </head>
 <body>
     <div id="game">
-        <div class="buttons"><button type="button" onmousedown="undoButton()" id="undo">Undo</button></div>
+        <div class="buttons">
+            Auto-Play<input type="checkbox">
+            <button type="button" onmousedown="undoButton()" id="undo">Undo</button>
+        </div>
         <div class="top-row">
             <div class="cells-row">
-                <div class="cell slot ancestor" slot-type="cell" capacity="1"></div>
-                <div class="cell slot ancestor" slot-type="cell" capacity="1"></div>
-                <div class="cell slot ancestor" slot-type="cell" capacity="1"></div>
-                <div class="cell slot ancestor" slot-type="cell" capacity="1"></div>
+                <div class="cell slot ancestor" ancestor-type="cell" capacity="1"></div>
+                <div class="cell slot ancestor" ancestor-type="cell" capacity="1"></div>
+                <div class="cell slot ancestor" ancestor-type="cell" capacity="1"></div>
+                <div class="cell slot ancestor" ancestor-type="cell" capacity="1"></div>
             </div><!--End cells-row-->
             <div class="foundation-row">
-                <div class="foundation slot ancestor" slot-type="foundation" capacity="1"></div>
-                <div class="foundation slot ancestor" slot-type="foundation" capacity="1"></div>
-                <div class="foundation slot ancestor" slot-type="foundation" capacity="1"></div>
-                <div class="foundation slot ancestor" slot-type="foundation" capacity="1"></div>
+                <div class="foundation slot ancestor" ancestor-type="foundation" capacity="1"></div>
+                <div class="foundation slot ancestor" ancestor-type="foundation" capacity="1"></div>
+                <div class="foundation slot ancestor" ancestor-type="foundation" capacity="1"></div>
+                <div class="foundation slot ancestor" ancestor-type="foundation" capacity="1"></div>
             </div><!--End foundation-row-->
         </div>
         <div class="cascade-row">
-            <div class="cascade slot ancestor" slot-type="cascade" capacity="1" id="c0"></div>
-            <div class="cascade slot ancestor" slot-type="cascade" capacity="1" id="c1"></div>
-            <div class="cascade slot ancestor" slot-type="cascade" capacity="1" id="c2"></div>
-            <div class="cascade slot ancestor" slot-type="cascade" capacity="1" id="c3"></div>
-            <div class="cascade slot ancestor" slot-type="cascade" capacity="1" id="c4"></div>
-            <div class="cascade slot ancestor" slot-type="cascade" capacity="1" id="c5"></div>
-            <div class="cascade slot ancestor" slot-type="cascade" capacity="1" id="c6"></div>
-            <div class="cascade slot ancestor" slot-type="cascade" capacity="1" id="c7"></div>
+            <div class="cascade slot ancestor" ancestor-type="cascade" capacity="1" id="c0"></div>
+            <div class="cascade slot ancestor" ancestor-type="cascade" capacity="1" id="c1"></div>
+            <div class="cascade slot ancestor" ancestor-type="cascade" capacity="1" id="c2"></div>
+            <div class="cascade slot ancestor" ancestor-type="cascade" capacity="1" id="c3"></div>
+            <div class="cascade slot ancestor" ancestor-type="cascade" capacity="1" id="c4"></div>
+            <div class="cascade slot ancestor" ancestor-type="cascade" capacity="1" id="c5"></div>
+            <div class="cascade slot ancestor" ancestor-type="cascade" capacity="1" id="c6"></div>
+            <div class="cascade slot ancestor" ancestor-type="cascade" capacity="1" id="c7"></div>
         </div><!--End cascade-row-->
     </div>
 </body>

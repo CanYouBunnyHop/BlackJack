@@ -44,10 +44,10 @@
     border: 0px;
     padding: 0px;
 }
-#game .card-container .card-container[slot-type="cascade"]{ /*when card-container is within a card-container*/
+#game .card-container .card-container[ancestor-type="cascade"]{ /*when card-container is within a card-container*/
     margin-top: var(--card-cascade-gap);
 }
-#game .card-container .card-container[slot-type="foundation"]{
+#game .card-container .card-container[ancestor-type="foundation"]{
     --mtop : calc(-1 * var(--card-height));
     margin-top: calc(var(--mtop) + -4px);
 }

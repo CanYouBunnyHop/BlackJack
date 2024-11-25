@@ -17,7 +17,7 @@ export async function startDrag(mdownEvent, targetParentElement, animationTime =
 
         const dragLock = (DRAG_TARGET.getAttribute('lock') ?? 'false')==='true';
         if(!DRAG_START_SLOT || document.body.getAttribute('transitioning') === 'true' || dragLock || !_allowsDrag) 
-            return Promise.reject();
+            return null;
 
         document.body.setAttribute('drag-active', true);
         const INITIAL_TRANSITION = DRAG_TARGET.style.transition;

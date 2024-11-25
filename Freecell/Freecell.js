@@ -38,6 +38,7 @@ const __ANIM_MOVE_TIME = getCSSDeclaredValue(GAME, '--anim-move-time', true);
 const __CARD_HEIGHT = getCSSDeclaredValue(GAME, '--card-height', true);
 const __CARD_CASCADE_GAP = getCSSDeclaredValue(GAME,'--card-cascade-gap', true);
 const __SLOT_BORDER_SIZE = getCSSDeclaredValue(GAME,'--slot-border-size', true);
+const borderOffset = new Vector2(__SLOT_BORDER_SIZE, __SLOT_BORDER_SIZE);
 
 const MOVE_MANAGER = new Caretaker();
 const SOLITAIRE_DECK = createSolitaireDeck();
@@ -56,28 +57,120 @@ const CELLS = GAME.querySelectorAll('.cell.slot.ancestor');
     //     4: new LinkedList(), 5: new LinkedList(),
     //     6: new LinkedList(), 7: new LinkedList(),
 //}
-//add getters
-[...CASCADES, ...FOUNDATIONS, ...CELLS].forEach(el=>{
-    Object.defineProperties(el,{
-        _head_ : { get : ()=>{
-            return el.lastElementChild?.classList.contains('card-container') ? el.lastElementChild : null;
+//#endregion
+//#region Define Gameobjects
+function isValidCascade(_startSlot){
+    let curCard = _startSlot;
+    let isValid = true;
+    while(curCard._next_ && isValid){
+        let nextCard = curCard._next_;
+        //need exception for cascades
+        let isNextOppositeColor = getSuitColor(curCard._suit_) !== getSuitColor(nextCard._suit_);
+        let isNextRankDown = nextCard._rank_ === curCard._rankDown_;
+        isValid = isNextOppositeColor && isNextRankDown;
+        curCard = curCard._next_;
+    }
+    return isValid;
+}
+//functionalities card and ancestor share
+function cardAndAncestorLogic(el){
+    Object.defineProperties(el, {
+        _prev_ : {get : ()=>{
+            return el.parentElement?.classList.contains('card-container') ? 
+            el.parentElement : null;
         }},
-    });
-    Object.defineProperties(el,{
-        _tail_ : { get : ()=>{
+        _next_ : {get : ()=>{
+            return el.lastElementChild?.classList.contains('card-container') ? 
+            el.lastElementChild : null;
+        }},
+        _toArr: {value : ()=>{
             let curCard = el._head_;
-            while(curCard){curCard = curCard._next_;}
-            return curCard;
+            let casArr = [];
+            while(curCard){
+                casArr.push(curCard);
+                curCard = curCard._next_;
+            }
+            return casArr;
         }},
+        _head_ : { get : ()=>{
+            if(el.classList.contains('ancestor'))return el._next_;
+            //get furthest parent, that is still a slot?
+            let curSlot = el;
+            while(el.parentElement?.classList.contains('card-container')){curSlot = el.parentElement;}
+            return curSlot;
+        }},
+        _tail_ : { get : ()=>{
+            let cur = el;
+            while(cur._next_){cur = cur._next_;}
+            return cur;
+        }},
+        _ancestor_ : {get : ()=>{
+            return el.closest('.ancestor');
+        }},
+        _ancestorType_ :{get : ()=>{
+            return el._ancestor_.getAttribute('ancestor-type');
+        }},
+        _isValid_ : {get : ()=>{
+            let curCard = el;
+            let isValid = true;
+            while(curCard._next_ && isValid){
+                if(curCard.classList.contains('ancestor')){
+                    curCard = curCard._next_;
+                    continue;
+                }
+                let nextCard = curCard._next_;
+                //need exception for cascades
+                let isNextOppositeColor = getSuitColor(curCard._suit_) !== getSuitColor(nextCard._suit_);
+                let isNextRankDown = nextCard._rank_ === curCard._rankDown_;
+                isValid = isNextOppositeColor && isNextRankDown;
+                curCard = curCard._next_;
+            } return isValid;
+        }},
+        _appendCard : {value : (_card)=>{
+            let aType = el._ancestorType_;
+            //go inwards
+            let curCard = _card;
+            while(curCard){
+                curCard.setAttribute('ancestor-type', aType);
+                curCard = curCard._next_;
+            }
+            //append
+            el.appendChild(_card);
+        }}
+    });
+}
+//Tableaus logic
+[...CASCADES, ...FOUNDATIONS, ...CELLS].forEach(el=>{
+    cardAndAncestorLogic(el);
+    Object.defineProperties(el,{
+        _suit_ : { get : ()=>{return el._head_?._suit_;}},
     });
 })
+function createCard(_suit, _rank){
+    let containerClone = PROTO_CARD_CONTAINER.cloneNode(true);
+    containerClone.appendChild(new Card(_suit, _rank).createElement());
+    //DEBUG SET ATTRIBUTE
+    containerClone._suit_ = _suit;
+    containerClone._rank_ = _rank;
+    containerClone.id = _suit+_rank;
+    //set rankdown and rankup
+    let o_ranks = getNeigbourRanks(_rank);
+    containerClone._rankUp_ = o_ranks.rankUp;
+    containerClone._rankDown_ = o_ranks.rankDown;
+    //2 because holds 1 outer-card and 1 card-container
+    containerClone.setAttribute('capacity', 2);
+    //add some logic
+    cardAndAncestorLogic(containerClone);
+    return containerClone;
+}
 //#endregion
 
 //
 //#region Freecell Main
 //
 window.onload =()=>{
-    dealCards();
+    //dealCards();
+    debugDeal();
     //It probably will never happen but it's possible starting deal is also winning deal
     FOUNDATIONS.forEach(el=>el._rankUp_='A'); //foundations only take Aces at the beginning
     setAllElementWithLogic('.slot', 'mouseover', (ev)=>slotLogic(ev, 'mouseout'));
@@ -98,6 +191,29 @@ function createSolitaireDeck(){
     return deck;
 }
 ////['♠️','♣️','♥️','♦️']
+function debugDeal(){
+    let cascades = [...CASCADES];
+    let aces = [createCard('♠️','A'), createCard('♣️','A'), createCard('♥️','A'), createCard('♦️','A')];
+    let twos = [createCard('♠️','2'), createCard('♣️','2'), createCard('♥️','2'), createCard('♦️','2')];
+    let threes = [createCard('♠️','3'), createCard('♣️','3'), createCard('♥️','3'), createCard('♦️','3')];
+    let fours = [createCard('♠️','4'), createCard('♣️','4'), createCard('♥️','4'), createCard('♦️','4')];
+    let fives = [createCard('♠️','5'), createCard('♣️','5'), createCard('♥️','5'), createCard('♦️','5')];
+    let sixs = [createCard('♠️','6'), createCard('♣️','6'), createCard('♥️','6'), createCard('♦️','6')];
+    let sevens = [createCard('♠️','7'), createCard('♣️','7'), createCard('♥️','7'), createCard('♦️','7')];
+    let eights = [createCard('♠️','8'), createCard('♣️','8'), createCard('♥️','8'), createCard('♦️','8')];
+    let nines = [createCard('♠️','9'), createCard('♣️','9'), createCard('♥️','9'), createCard('♦️','9')];
+    let tens = [createCard('♠️','10'), createCard('♣️','10'), createCard('♥️','10'), createCard('♦️','10')];
+    let jacks = [createCard('♠️','J'), createCard('♣️','J'), createCard('♥️','J'), createCard('♦️','J')];
+    let queens = [createCard('♠️','Q'), createCard('♣️','Q'), createCard('♥️','Q'), createCard('♦️','Q')];
+    let kings = [createCard('♠️','K'), createCard('♣️','K'), createCard('♥️','K'), createCard('♦️','K')];
+    let allCards = [aces, twos, threes, fours, fives, sixs, sevens, eights, nines, tens, jacks, queens, kings].flat();
+    let i = 0;
+    while (allCards.length > 0){
+        if(i > cascades.length-1) i = 0;
+        cascades[i]._tail_._appendCard(allCards.pop());
+        i++;
+    }
+}
 function dealCards(){
     //const cascadeHeads = [...CASCADES];
     let cascadeEnds = [...CASCADES];
@@ -105,63 +221,40 @@ function dealCards(){
     while(SOLITAIRE_DECK.length > 0){
         if(i > cascadeEnds.length-1) i = 0; //loop around back to start
         let randomCard = popRandomFromArr(SOLITAIRE_DECK);
-        Object.defineProperties(randomCard, {
-            _prev_ : {get : ()=>{
-                return randomCard.parentElement.classList.contains('card-container') ? 
-                randomCard.parentElement : null;
-            }},
-             _next_ : {get : ()=>{
-                 return randomCard.lastElementChild.classList.contains('card-container') ? 
-                 randomCard.lastElementChild : null;
-             }},
-             _ancestor_ : {get : ()=>{
-                return randomCard.closest('.ancestor');
-             }} 
-        });
-        //track the tableaus
-        //TABLEAUS[i].appendItem(randomCard);
-        //easier to get tabaleau later
-        //randomCard.setAttribute('tableau-id', i);
-        appendCardToSlot(cascadeEnds[i], randomCard);
+        cascadeEnds[i]._appendCard(randomCard);
         cascadeEnds[i] = randomCard; //change target slot to the card
         i++;
     }
-    //console.log(TABLEAUS);
 }
-function createCard(_suit, _rank){
-    let containerClone = PROTO_CARD_CONTAINER.cloneNode(true);
-    containerClone.appendChild(new Card(_suit, _rank).createElement());
-    //DEBUG SET ATTRIBUTE
-    containerClone.setAttribute('suit', _suit); containerClone._suit_ = _suit;
-    containerClone.setAttribute('rank', _rank); containerClone._rank_ = _rank;
 
-    //set rankdown and rankup
-    let o_ranks = getNeigbourRanks(_rank);
-    containerClone._rankUp_ = o_ranks.rankUp;
-    containerClone._rankDown_ = o_ranks.rankDown;
-    
-    containerClone.setAttribute('capacity', 2); //2 because holds 1 outer-card and 1 card-container
-    return containerClone;
-}
-function winCondition(){
+async function winCondition(){
+    let cells = [...CELLS];
     let cascades = [...CASCADES];
     let foundations = [...FOUNDATIONS];
-    if(cascades.every(el=>!el._validCascade_)) return;
-    
-    //move every card upwards to foundation
-
+    //check for win-condition...
+    if(!cascades.every(f=>{return f._isValid_})) return;
+    let everyCardLeft = cells.concat(cascades).reduce((allCards, curTab)=>allCards.concat(curTab._toArr()),[]).length;
+    while(everyCardLeft > 0){
+        for(let foundation of foundations){
+            let isFoundationEmpty = foundation._head_===null ? true : false;
+            let tail =  foundation._tail_;
+            let validId = isFoundationEmpty ? ['♠️A','♣️A','♥️A','♦️A'].find(aceId=>
+                document.getElementById(aceId)._ancestorType_ !== 'foundation') : 
+                tail._suit_ + tail._rankUp_;
+            let validCard = document.getElementById(validId);
+            if(validCard === null) continue;//if no validcard, continue to next foundation
+            let mrect = foundation.getBoundingClientRect();
+            let movePos = new Vector2(mrect.x, mrect.y).add(borderOffset);
+            await requestFrame(); //delayed fixed animation, idk why
+            await moveCardWithTransition(validCard, movePos, tail);
+            everyCardLeft--;
+        }
+    }
 }
 //#endregion Freecell Main
-
 //
 //#region Freecell Algo
 //
-function getSlotType(_slot){
-    const SLOT_TYPE = ['cell','foundation','cascade'].find(type=>_slot.getAttribute('slot-type') === type);
-    if (SLOT_TYPE !== undefined) return SLOT_TYPE;
-    console.error('INVALID SLOT TYPE', SLOT_TYPE);
-    return 'error';
-}
 function getInnerCount(_startSlot){ //Turn to get LinkedList
     //go outwards then go inwards
     let curSlot = _startSlot;
@@ -173,57 +266,9 @@ function getInnerCount(_startSlot){ //Turn to get LinkedList
     }
     return count;
 }
-function appendCardToSlot(_slot, _card){ //TODO: CHANGE TO USE LINKED LIST
-    const SLOT_TYPE = getSlotType(_slot);
-    //set attribute need to also travel inwards
-    let curCard = _card;
-    while(curCard.classList.contains('slot')){
-        curCard.setAttribute('slot-type', SLOT_TYPE);   
-        curCard = curCard.lastElementChild; //go inwards
-    }
-    _slot.appendChild(_card);        
-}
-function isValidCascade(_startSlot){ //TODO: change to use linked list?
-    // let tableauID = _startCard.getAttribute('tableau-id'); //?? _startCard.id; 
-    // let startIndex = TABLEAUS[tableauID].indexOf(_startCard);
-    // let curCascade = TABLEAUS[tableauID].splitListAt(startIndex); //this is inclusive
-    // console.log(startIndex);
-    // let curCard = curCascade.head; let isValid = true;
-    // while(curCard){
-    //     let curColor = getSuitColor(curCard.data._suit_);
-    //     let nexColor = getSuitColor(curCard.next?.data._suit_);
-    //     let isNextOppositeColor = curColor !== nexColor;
-    //     let isNextRankDown = curCard.next?.data._rank_ === curCard.data._rankDown_;
-    //     if(!isNextOppositeColor && !isNextRankDown){
-    //         isValid = false; break;
-    //     } 
-    //     curCard = curCard.next;
-    // }
-    // return {
-    //     isValid, 
-    //     cascade : curCascade
-    // }
-
-    //old
-    let curCard = _startSlot;
-    let output = true;
-    let continueLoop = (cur, next)=>{
-        if(!next.classList.contains('card-container')) return false;
-        let isNextOppositeColor = getSuitColor(cur?._suit_) !== getSuitColor(next._suit_);
-        let isNextRankDown = next._rank_ === cur._rankDown_;
-        output = isNextOppositeColor && isNextRankDown;
-        return output;
-    }
-    //going inwards and check for validity 
-    while(continueLoop(curCard, curCard.lastElementChild)){
-        if(curCard.lastElementChild === null) break;
-        curCard = curCard.lastElementChild;
-    }
-    return output;
-}
 function getAllowedDragCount(){
-    let emptyCells = [...CELLS].filter(cell=>!cell.lastElementChild?.classList.contains('card-container'), 0);
-    let emptyCascades = [...CASCADES].filter(cas=>!cas.lastElementChild?.classList.contains('card-container'),0);
+    let emptyCells = [...CELLS].filter(cell=>!cell._head_, 0);
+    let emptyCascades = [...CASCADES].filter(cas=>!cas._head_, 0);
     let canMove = emptyCells.length + emptyCascades.length;
     if(emptyCascades.length >= 1) return canMove * 2; //if has empty column advantage
     return canMove + 1;
@@ -250,7 +295,7 @@ async function releaseDrag(b4ReleaseOut){
     const {DRAG_START, DRAG_TARGET, IS_SAME_SLOT} = b4ReleaseOut;
     let {DRAG_RELEASE : drag_release} = b4ReleaseOut;
     let {DESTINATION_SLOT : dest} = drag_release;
-    let dest_type = getSlotType(dest);
+    let dest_type = dest._ancestorType_;
 
     let dragCount = getInnerCount(DRAG_TARGET);
     let ancestorInnerCount = getInnerCount(dest.closest('.slot.ancestor')); 
@@ -272,7 +317,7 @@ async function releaseDrag(b4ReleaseOut){
                 return isRankDown && isDiffColor && dragCount <= allowedDragCount;
             case _: return false;
         }
-    })(); //console.log('VALID MOVE',IS_VALID_MOVE);
+    })(); console.log('VALID MOVE',IS_VALID_MOVE);
 
     const NEW_DESTINATION_SLOT = IS_VALID_MOVE ? dest : DRAG_START.SLOT;
     //save start position if move is valid and is not same slot
@@ -280,10 +325,10 @@ async function releaseDrag(b4ReleaseOut){
         MOVE_MANAGER.remember(new Memento(DRAG_TARGET, DRAG_START.POS, DRAG_START.SLOT));
     //cascade, card-container, cell, foundation
     const IS_DEST_CARD_CON = NEW_DESTINATION_SLOT.classList.contains('card-container');
-    const DESTINATION_SLOT_TYPE = getSlotType(NEW_DESTINATION_SLOT);
+    const DESTINATION_SLOT_TYPE = NEW_DESTINATION_SLOT._ancestorType_;
     
     const MOVE_OFFSET = (()=>{//Immediate invoke
-        const borderOffset = new Vector2(__SLOT_BORDER_SIZE, __SLOT_BORDER_SIZE);
+        
         switch(DESTINATION_SLOT_TYPE){
             case 'cell': return borderOffset;
             case 'foundation': return IS_DEST_CARD_CON ? Vector2.zero : borderOffset;
@@ -294,7 +339,6 @@ async function releaseDrag(b4ReleaseOut){
     let _destRect = NEW_DESTINATION_SLOT.getBoundingClientRect();
     const MOVE_POS = new Vector2(_destRect.x, _destRect.y).add(MOVE_OFFSET); 
     moveCardWithTransition(DRAG_TARGET, MOVE_POS, NEW_DESTINATION_SLOT);
-
     const START_CAS_ANCESTOR = DRAG_START.SLOT.closest('.cascade.slot.ancestor');
     const DEST_CAS_ANCESTOR = NEW_DESTINATION_SLOT.closest('.cascade.slot.ancestor');
     return {...b4ReleaseOut, NEW_DESTINATION_SLOT, START_CAS_ANCESTOR, DEST_CAS_ANCESTOR}
@@ -315,16 +359,11 @@ async function moveCardWithTransition(_card, _movePosition, _destSlot){
     _card.style.position = 'relative';
     _card.style.left = '0px';
     _card.style.top = '0px';
-    appendCardToSlot(_destSlot, _card);
+    _destSlot._appendCard(_card);
 }
 async function endTransition(_releaseOut){//after transition ends
     const{START_CAS_ANCESTOR, DEST_CAS_ANCESTOR} = _releaseOut;
-    // if(START_CAS_ANCESTOR)
-    //     START_CAS_ANCESTOR._validCascade_ = isValidCascade(START_CAS_ANCESTOR);
-    // if(DEST_CAS_ANCESTOR)
-    //     DEST_CAS_ANCESTOR._validCascade_ = isValidCascade(DEST_CAS_ANCESTOR);
-
-    //check if all cascades are valid, start to move them to foundation one by one
+    await winCondition();
 }
 //#endregion
 
