@@ -25,9 +25,3 @@ export function getCSSDeclaredValue(_targetEl, _propertyName, _convertToNumeric 
     let val = style.getPropertyValue(_propertyName);
     return _convertToNumeric ? convertCSSPropertyToNumeric(val) : val;
 }
-// export function unicodeToChar(text) { //no clue wtf this is, form stack overflow
-//     return text.replace(/\\u[\dA-F]{4}/gi, 
-//            function (match) {
-//                 return String.fromCharCode(parseInt(match.replace(/\\u/g, ''), 16));
-//            });
-//  }

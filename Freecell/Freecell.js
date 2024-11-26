@@ -159,8 +159,8 @@ function createCard(_suit, _rank){
 //
 window.onload =()=>{
     //dealCards();
-    debugDeal();
-    //debugDealV();
+    //debugDeal();
+    debugDealLong();
     //It probably will never happen but it's possible starting deal is also winning deal
     FOUNDATIONS.forEach(el=>el._rankUp_='A'); //foundations only take Aces at the beginning
     setAllElementWithLogic('.slot', 'mouseover', (ev)=>slotLogic(ev, 'mouseout'));
@@ -169,8 +169,8 @@ window.onload =()=>{
     let _curStyle = getComputedStyle(GAME);
     let _curHeight = _curStyle.getPropertyValue('height');
     let _curHeightNumeric = convertCSSPropertyToNumeric(_curHeight);
-    let totalHeight = _curHeightNumeric + (__CARD_HEIGHT + __CARD_CASCADE_GAP)*11;
-    GAME.style.height = `${totalHeight}px`;
+    let totalHeight = _curHeightNumeric + (__CARD_HEIGHT + __CARD_CASCADE_GAP)*22;
+    GAME.style.height = `${totalHeight}px`; //resize game height to tallest possible, avoid resizing
 };
 //Undo button 
 window.undoButton = ()=>{
@@ -186,88 +186,32 @@ function createSolitaireDeck(){
     }
     return deck;
 }
-//let test = "♠️a♣️a♥️a♦️";
-//♠\uFE0F♣\uFE0F♥\uFE0F♦\uFE0F
-//♠♣♥♦
-//♠♣♥♦
+function dealCardWithID(_cascadeAncestor, ..._cardIds){
+    for(let cardId of _cardIds){
+        cardId = [...cardId];
+        let suit = cardId.shift(); 
+        let rank = cardId.join('');
+        _cascadeAncestor._tail_._appendCard(createCard(suit, rank));
+    }
+
+}
 function debugDeal(){
     let cascades = [...CASCADES];
-    let appendToSlot = (_index, ..._cardIds)=>{
-        for(let cardId of _cardIds){
-            cardId = [...cardId];
-            let suit = cardId.shift(); 
-            let rank = cardId.join('');
-            console.log(suit, suit.length, rank, rank.length);
-            cascades[_index]._tail_._appendCard(createCard(suit, rank));
-        }
-    }
-    appendToSlot(0, 
-        '♠K',
-        '♥Q', 
-        '♠J', 
-        '♥10',
-        '♠9',
-        '♥8',
-        '♠7',
-    );
-    appendToSlot(1,
-        '♣K',
-        '♦Q',
-        '♣J',
-        '♦10',
-        '♣9',
-        '♦8',
-        '♣7',
-    );
-    appendToSlot(2,
-        '♥K',
-        '♠Q',
-        '♥J',
-        '♠10',
-        '♥9',
-        '♠8',
-        '♥7',
-    );
-    appendToSlot(3,
-        '♦K',
-        '♣Q',
-        '♦J',
-        '♣10',
-        '♦9',
-        '♣8',
-        '♦7',
-    );
-    appendToSlot(4,
-        '♠6',
-        '♥5',
-        '♠4',
-        '♥3',
-        '♠2',
-        '♥A',
-    );
-    appendToSlot(5,
-        '♣6',
-        '♦5',
-        '♣4',
-        '♦3',
-        '♣2',
-        '♦A',
-    );
-    appendToSlot(6,
-        '♥6',
-        '♠5',
-        '♥4',
-        '♠3',
-        '♥2',
-        '♠A',
-    );
-    appendToSlot(7,
-        '♦6',
-        '♣5',
-        '♦4',
-        '♣3',  
-        '♦2',
-        '♣A',
+    dealCardWithID(cascades[0],'♠K','♥Q','♠J','♥10','♠9','♥8','♠7');
+    dealCardWithID(cascades[1],'♣K','♦Q','♣J','♦10','♣9','♦8','♣7');
+    dealCardWithID(cascades[2],'♥K','♠Q','♥J','♠10','♥9','♠8','♥7');
+    dealCardWithID(cascades[3],'♦K','♣Q','♦J','♣10','♦9','♣8','♦7');
+    dealCardWithID(cascades[4],'♠6','♥5','♠4','♥3','♠2','♥A');
+    dealCardWithID(cascades[5],'♣6','♦5','♣4','♦3','♣2','♦A');
+    dealCardWithID(cascades[6],'♥6','♠5','♥4','♠3','♥2','♠A');
+    dealCardWithID(cascades[7],'♦6','♣5','♦4','♣3','♦2','♣A');
+}
+function debugDealLong(){
+    let cascades = [...CASCADES];
+    //longest possible chain that is valid
+    dealCardWithID(cascades[0],
+        '♠K','♥Q','♠J','♥10','♠9','♥8','♥K','♠Q','♥J','♠10','♥9','♠8',
+        '♥7','♠6','♥5','♠4','♥3','♠2','♥A'
     );
 }
 function dealCards(){
@@ -283,8 +227,7 @@ function dealCards(){
 }
 
 async function winCondition(){
-    return;
-
+    return; //DEBUG
     let cells = [...CELLS];
     let cascades = [...CASCADES];
     let foundations = [...FOUNDATIONS];

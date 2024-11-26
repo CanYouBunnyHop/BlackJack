@@ -14,7 +14,6 @@ export async function startDrag(mdownEvent, targetParentElement, animationTime =
     endTransition= async(_releaseOut)=>{return {..._releaseOut}}, _allowsDrag = true){//start drag chain function
         const DRAG_TARGET = mdownEvent.target.closest('.draggable');
         const DRAG_START_SLOT = mdownEvent.target.parentElement.closest('.slot');
-
         const dragLock = (DRAG_TARGET.getAttribute('lock') ?? 'false')==='true';
         if(!DRAG_START_SLOT || document.body.getAttribute('transitioning') === 'true' || dragLock || !_allowsDrag) 
             return null;
@@ -33,7 +32,7 @@ export async function startDrag(mdownEvent, targetParentElement, animationTime =
             DRAG_START : {
                 SLOT : DRAG_START_SLOT,
                 POS : new Vector2(_rect.x, _rect.y), 
-                MPOS : new Vector2(mdownEvent.pageX, mdownEvent.pageY),
+                MPOS : new Vector2(mdownEvent.clientX, mdownEvent.clientY),
                 INDEX : [...DRAG_START_SLOT.children].indexOf(DRAG_TARGET),
                 NEIGHBOUR : { L: DRAG_TARGET.previousElementSibling, R: DRAG_TARGET.nextElementSibling}
             }
@@ -42,7 +41,10 @@ export async function startDrag(mdownEvent, targetParentElement, animationTime =
         afterStartDrag(START_OUT);
         onDrag(mdownEvent, START_OUT);
         const DRAGGING_REF = (moveEvent) => onDrag(moveEvent, START_OUT);
+        //when mouse is moving and when scrolling
         document.addEventListener('mousemove', DRAGGING_REF);
+        const SCROLL_REF = ()=>{};
+        document.addEventListener('scroll', SCROLL_REF);
         //ReleaseDrag
         const ON_MOUSE_UP_REF = onMouseUp;
         document.addEventListener('mouseup', ON_MOUSE_UP_REF);
@@ -61,17 +63,28 @@ export async function startDrag(mdownEvent, targetParentElement, animationTime =
 }
 function onDrag(moveEvent, _startOut){
     const{DRAG_TARGET, DRAG_START} = _startOut;
-    let curMPos = new Vector2(moveEvent.pageX, moveEvent.pageY);
+
+    moveEvent.preventDefault();
+    let curMPos = new Vector2(moveEvent.clientX, moveEvent.clientY);
     let mPosDelta = curMPos.subtract(DRAG_START.MPOS);
     let followPos = DRAG_START.POS.add(mPosDelta);
     //follow mouse
     DRAG_TARGET.style.position = 'fixed';
     DRAG_TARGET.style.left = `${followPos.x}px`;
     DRAG_TARGET.style.top = `${followPos.y}px`;
-
     if(followPos.x!==DRAG_START.POS.x||followPos.y!==DRAG_START.POS.y)
         document.body.setAttribute('transitioning', true);
     else document.body.setAttribute('transitioning', false);
+    //scroll document automatically when dragging
+    //  if(moveEvent.clientY < 50){
+    //     document.dispatchEvent(new WheelEvent('wheel', {
+    //     deltaY: -100 // adjust the value to control scroll speed
+    //   }));}
+    //  else if (moveEvent.clientY > window.screenY - 50){
+    //     document.dispatchEvent(new WheelEvent('wheel', {
+    //     deltaY: 100 // adjust the value to control scroll speed
+    // }));}
+    
 }
 async function beforeReleaseDrag(releaseEvent, _startOut){
     const{DRAG_START} = _startOut;

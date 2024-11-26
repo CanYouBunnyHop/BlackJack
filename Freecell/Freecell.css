@@ -1,5 +1,8 @@
+html{
+    scroll-behavior: smooth;
+}
 #game{
-    --card-scale : 3.5;
+    --card-scale : 4;
     --card-cascade-gap : calc(-28px * var(--card-scale));
     --anim-time-scale : 0.3;
     --anim-move-time : calc(1s * var(--anim-time-scale));
