@@ -1,6 +1,6 @@
 import {resetCardGame, Card, getSuitColor, getNeigbourRanks, CARD_DATA} from '../modules/PlayingCards.js';
 import Vector2 from '../modules/Vector2.js';
-import { setAllElementWithLogic, popRandomFromArr, getCSSDeclaredValue } from '../modules/MyMiscUtil.js';
+import { setAllElementWithLogic, popRandomFromArr, getCSSDeclaredValue, convertCSSPropertyToNumeric } from '../modules/MyMiscUtil.js';
 import{ requestFrame, timer, restartCSSAnimation } from '../modules/CSSAnimationUtil.js';
 import {startDrag, slotLogic} from '../modules/MyDraggables.js';
 import { Memento, Caretaker } from '../modules/UndoPattern.js';
@@ -28,6 +28,7 @@ import LinkedList from '../modules/LinkedList.js';
 // you can effectively move 4 cards (2 cards for the 1 free cell, multiplied by two). 
 // This applies as long as you are not moving cards into the actual empty column, 
 // in which case you are unable to take advantage of the doubling.
+//♠♣♥♦ 
 
 //#region globals
 const GAME = document.getElementById('game');
@@ -46,17 +47,6 @@ const SOLITAIRE_DECK = createSolitaireDeck();
 const FOUNDATIONS = GAME.querySelectorAll('.foundation.slot.ancestor');
 const CASCADES = GAME.querySelectorAll('.cascade.slot.ancestor');
 const CELLS = GAME.querySelectorAll('.cell.slot.ancestor');
-//const TABLEAUS = { 
-    //using default html's implementation instead?
-    //next = lastElementChild, check classlist contains ? card-container
-    //prev = parentElement, check classlist contains ? slot ???
-    //head = closest ancestor's lastElementChild ?
-    //create getters
-    //     0: new LinkedList(), 1: new LinkedList(),
-    //     2: new LinkedList(), 3: new LinkedList(),
-    //     4: new LinkedList(), 5: new LinkedList(),
-    //     6: new LinkedList(), 7: new LinkedList(),
-//}
 //#endregion
 //#region Define Gameobjects
 function isValidCascade(_startSlot){
@@ -165,16 +155,22 @@ function createCard(_suit, _rank){
 }
 //#endregion
 
-//
 //#region Freecell Main
 //
 window.onload =()=>{
     //dealCards();
     debugDeal();
+    //debugDealV();
     //It probably will never happen but it's possible starting deal is also winning deal
     FOUNDATIONS.forEach(el=>el._rankUp_='A'); //foundations only take Aces at the beginning
     setAllElementWithLogic('.slot', 'mouseover', (ev)=>slotLogic(ev, 'mouseout'));
     setAllElementWithLogic('.draggable', 'mousedown', solitaireStartDrag);
+
+    let _curStyle = getComputedStyle(GAME);
+    let _curHeight = _curStyle.getPropertyValue('height');
+    let _curHeightNumeric = convertCSSPropertyToNumeric(_curHeight);
+    let totalHeight = _curHeightNumeric + (__CARD_HEIGHT + __CARD_CASCADE_GAP)*11;
+    GAME.style.height = `${totalHeight}px`;
 };
 //Undo button 
 window.undoButton = ()=>{
@@ -190,32 +186,91 @@ function createSolitaireDeck(){
     }
     return deck;
 }
-////['♠️','♣️','♥️','♦️']
+//let test = "♠️a♣️a♥️a♦️";
+//♠\uFE0F♣\uFE0F♥\uFE0F♦\uFE0F
+//♠♣♥♦
+//♠♣♥♦
 function debugDeal(){
     let cascades = [...CASCADES];
-    let aces = [createCard('♠️','A'), createCard('♣️','A'), createCard('♥️','A'), createCard('♦️','A')];
-    let twos = [createCard('♠️','2'), createCard('♣️','2'), createCard('♥️','2'), createCard('♦️','2')];
-    let threes = [createCard('♠️','3'), createCard('♣️','3'), createCard('♥️','3'), createCard('♦️','3')];
-    let fours = [createCard('♠️','4'), createCard('♣️','4'), createCard('♥️','4'), createCard('♦️','4')];
-    let fives = [createCard('♠️','5'), createCard('♣️','5'), createCard('♥️','5'), createCard('♦️','5')];
-    let sixs = [createCard('♠️','6'), createCard('♣️','6'), createCard('♥️','6'), createCard('♦️','6')];
-    let sevens = [createCard('♠️','7'), createCard('♣️','7'), createCard('♥️','7'), createCard('♦️','7')];
-    let eights = [createCard('♠️','8'), createCard('♣️','8'), createCard('♥️','8'), createCard('♦️','8')];
-    let nines = [createCard('♠️','9'), createCard('♣️','9'), createCard('♥️','9'), createCard('♦️','9')];
-    let tens = [createCard('♠️','10'), createCard('♣️','10'), createCard('♥️','10'), createCard('♦️','10')];
-    let jacks = [createCard('♠️','J'), createCard('♣️','J'), createCard('♥️','J'), createCard('♦️','J')];
-    let queens = [createCard('♠️','Q'), createCard('♣️','Q'), createCard('♥️','Q'), createCard('♦️','Q')];
-    let kings = [createCard('♠️','K'), createCard('♣️','K'), createCard('♥️','K'), createCard('♦️','K')];
-    let allCards = [aces, twos, threes, fours, fives, sixs, sevens, eights, nines, tens, jacks, queens, kings].flat();
-    let i = 0;
-    while (allCards.length > 0){
-        if(i > cascades.length-1) i = 0;
-        cascades[i]._tail_._appendCard(allCards.pop());
-        i++;
+    let appendToSlot = (_index, ..._cardIds)=>{
+        for(let cardId of _cardIds){
+            cardId = [...cardId];
+            let suit = cardId.shift(); 
+            let rank = cardId.join('');
+            console.log(suit, suit.length, rank, rank.length);
+            cascades[_index]._tail_._appendCard(createCard(suit, rank));
+        }
     }
+    appendToSlot(0, 
+        '♠K',
+        '♥Q', 
+        '♠J', 
+        '♥10',
+        '♠9',
+        '♥8',
+        '♠7',
+    );
+    appendToSlot(1,
+        '♣K',
+        '♦Q',
+        '♣J',
+        '♦10',
+        '♣9',
+        '♦8',
+        '♣7',
+    );
+    appendToSlot(2,
+        '♥K',
+        '♠Q',
+        '♥J',
+        '♠10',
+        '♥9',
+        '♠8',
+        '♥7',
+    );
+    appendToSlot(3,
+        '♦K',
+        '♣Q',
+        '♦J',
+        '♣10',
+        '♦9',
+        '♣8',
+        '♦7',
+    );
+    appendToSlot(4,
+        '♠6',
+        '♥5',
+        '♠4',
+        '♥3',
+        '♠2',
+        '♥A',
+    );
+    appendToSlot(5,
+        '♣6',
+        '♦5',
+        '♣4',
+        '♦3',
+        '♣2',
+        '♦A',
+    );
+    appendToSlot(6,
+        '♥6',
+        '♠5',
+        '♥4',
+        '♠3',
+        '♥2',
+        '♠A',
+    );
+    appendToSlot(7,
+        '♦6',
+        '♣5',
+        '♦4',
+        '♣3',  
+        '♦2',
+        '♣A',
+    );
 }
 function dealCards(){
-    //const cascadeHeads = [...CASCADES];
     let cascadeEnds = [...CASCADES];
     let i = 0;
     while(SOLITAIRE_DECK.length > 0){
@@ -228,6 +283,8 @@ function dealCards(){
 }
 
 async function winCondition(){
+    return;
+
     let cells = [...CELLS];
     let cascades = [...CASCADES];
     let foundations = [...FOUNDATIONS];
@@ -238,11 +295,12 @@ async function winCondition(){
         for(let foundation of foundations){
             let isFoundationEmpty = foundation._head_===null ? true : false;
             let tail =  foundation._tail_;
-            let validId = isFoundationEmpty ? ['♠️A','♣️A','♥️A','♦️A'].find(aceId=>
+            let validId = isFoundationEmpty ? ['♠A','♣A','♥A','♦A'].find(aceId=>
                 document.getElementById(aceId)._ancestorType_ !== 'foundation') : 
                 tail._suit_ + tail._rankUp_;
             let validCard = document.getElementById(validId);
-            if(validCard === null) continue;//if no validcard, continue to next foundation
+            //if no validcard or valid card is not tail, continue to next foundation
+            if(validCard === null || validCard._next_ !== null) continue;
             let mrect = foundation.getBoundingClientRect();
             let movePos = new Vector2(mrect.x, mrect.y).add(borderOffset);
             await requestFrame(); //delayed fixed animation, idk why
@@ -288,6 +346,7 @@ function solitaireStartDrag(mdownEvent){
 }
 async function afterStartDrag(_startOut) {
     const {DRAG_TARGET} = _startOut;
+    
     return {..._startOut};
 }
 async function releaseDrag(b4ReleaseOut){

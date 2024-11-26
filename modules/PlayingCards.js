@@ -20,10 +20,12 @@ PROTO_CARD_CONTAINER.innerHTML = `
     </div><!--end inner-card-->
 </div><!--end outer-card-->`;
 export const PROTO_CARD = PROTO_CARD_CONTAINER.querySelector('#proto-card'); //GET THE PROTOTYPE ELEMENT
+// export const SUITS_DATA = {
+
+// };
 export const CARD_DATA = {
     ranks : ['A','2','3','4','5','6','7','8','9','10','J','Q','K'],
-   
-    suits : ['♠️','♣️','♥️','♦️'],
+    suits : ['♠','♣','♥','♦'], //♠♣♥♦ 
 };
 export class Card {
     constructor(_suit, _rank) {this.suit = _suit; this.rank = _rank;}
@@ -54,23 +56,24 @@ export class Card {
                 [...botHalf].forEach(suit=>{suit.style.transform = 'rotate(180deg)'});
             });
         }
-        let hideSuit=(col, index)=>{col.children[index].style.visibility ='hidden';}
+        let hideSuit=(col, ...index)=>{index.forEach(i=>col.children[i].style.visibility ='hidden');}
         switch (this.rank){
-            case 'A':appendSuits(0,1,0);break;
-            case '2':appendSuits(0,2,0);break;
-            case '3':appendSuits(0,3,0);break;
-            case '4':appendSuits(2,0,2);break;
-            case '5':appendSuits(2,1,2);break;
-            case '6':appendSuits(3,0,3);break;
-            case '7':appendSuits(3,2,3); hideSuit(midCol, 1); break;
-            case '8':appendSuits(3,2,3);break;
-            case '9':appendSuits(4,1,4);break;
-            case '10':appendSuits(4,2,4);break;
-            case 'J': case 'Q': case 'K':appendSuits(2,0,2); hideSuit(leftCol, 1); hideSuit(rightCol, 0); break;
+            case 'A':appendSuits(0,1,0); break;
+            case '2':appendSuits(0,2,0); break;
+            case '3':appendSuits(0,3,0); break;
+            case '4':appendSuits(2,0,2); break;
+            case '5':appendSuits(2,1,2); break;
+            case '6':appendSuits(3,0,3); break;
+            case '7':appendSuits(3,2,3); hideSuit(midCol,1); break;
+            case '8':appendSuits(3,2,3); break;
+            case '9':appendSuits(4,1,4); break;
+            case '10':appendSuits(4,3,4); hideSuit(midCol,1); break;
+            case 'J': case 'Q': case 'K': appendSuits(2,0,2); hideSuit(leftCol, 1); hideSuit(rightCol, 0); break;
         }
-        [...clone.querySelectorAll('.rank')].forEach(element=>{element.innerHTML = this.rank;});
+        //\u2491 = 10
+        [...clone.querySelectorAll('.rank')].forEach(element=>{element.innerHTML = this.rank==='10'? '⒑': this.rank;}); 
         [...clone.querySelectorAll('.suit')].forEach(element=>{element.innerHTML = this.suit;});
-        clone.style.color = ['♥️','♦️'].includes(this.suit) ? 'crimson' : 'black';
+        clone.style.color = ['♥','♦'].includes(this.suit) ? 'crimson' : 'black';
         return clone;
     }
 }
@@ -93,27 +96,26 @@ export function resetCardGame(){
 
 //calculation for solitaire
 export function getSuitColor(_suit){
-    // /['♠️','♣️','♥️','♦️']
+    // ♠♣♥♦ 
     switch(_suit){
-        case '♠️': case '♣️': return 'black';
-        case '♥️': case'♦️': return 'red';
-        //default: console.error('Invalid Input : Input is not a suit emoji'); break;
+        case '♠': case '\u2663': return 'black';
+        case '♥': case'♦': return 'red';
     }
 }
 export function getSuitsWithOppositeColor(_suit, _returnsOpposite = true){
     let color = getSuitColor(_suit);
     if(_returnsOpposite){
         switch(color){
-            case 'black': return ['♥️','♦️'];
-            case 'red': return ['♠️','♣️'];
+            case 'black': return ['♥','♦'];
+            case 'red': return ['♠','\u2663'];
         }
     }else{
         switch(color){
-            case 'black': return ['♠️','♣️'];
-            case 'red': return ['♥️','♦️'];
+            case 'black': return ['♠','\u2663'];
+            case 'red': return ['♥','♦'];
         }
     }
-    return ['♠️','♣️','♥️','♦️']; //fallback
+    return ['♠','\u2663','♥','♦']; //fallback
 }
 export function getNeigbourRanks(_rank, _isLooping = false){
     let i = CARD_DATA.ranks.indexOf(_rank); //['A','2','3','4','5','6','7','8','9','10','J','Q','K']

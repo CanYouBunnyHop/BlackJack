@@ -1,10 +1,11 @@
 #game{
     --card-scale : 3.5;
-    --card-cascade-gap : calc(-26px * var(--card-scale));
+    --card-cascade-gap : calc(-28px * var(--card-scale));
     --anim-time-scale : 0.3;
     --anim-move-time : calc(1s * var(--anim-time-scale));
     --anim-move-initial-transition : left var(--anim-move-time), top var(--anim-move-time);
-    --slot-border-size : 4px;   
+    --slot-border-size : 4px;
+    /* outline: red solid 1px;    */
 }
 .draggable{transition: var(--anim-move-initial-transition);}
 #game .slot{width: var(--card-width); height: var(--card-height); flex-shrink: 0;}
