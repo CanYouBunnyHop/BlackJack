@@ -7,7 +7,7 @@ html{
     --anim-time-scale : 0.3;
     --anim-move-time : calc(1s * var(--anim-time-scale));
     --anim-move-initial-transition : left var(--anim-move-time), top var(--anim-move-time);
-    --slot-border-size : 4px;
+    --slot-border-size : calc(1px * var(--card-scale));
     /* outline: red solid 1px;    */
 }
 .draggable{transition: var(--anim-move-initial-transition);}
@@ -44,10 +44,9 @@ html{
     outline: rgb(17, 255, 0) solid 1px;
     display: inline-block;
 } */
-.card-container{
-    border: 0px;
-    padding: 0px;
-}
+
+.card-container{border: 0px;padding: 0px;}
+
 #game .card-container .card-container[ancestor-type="cascade"]{ /*when card-container is within a card-container*/
     margin-top: var(--card-cascade-gap);
 }

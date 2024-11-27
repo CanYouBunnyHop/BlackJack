@@ -63,7 +63,6 @@ export async function startDrag(mdownEvent, targetParentElement, animationTime =
 }
 function onDrag(moveEvent, _startOut){
     const{DRAG_TARGET, DRAG_START} = _startOut;
-
     moveEvent.preventDefault();
     let curMPos = new Vector2(moveEvent.clientX, moveEvent.clientY);
     let mPosDelta = curMPos.subtract(DRAG_START.MPOS);
@@ -75,6 +74,7 @@ function onDrag(moveEvent, _startOut){
     if(followPos.x!==DRAG_START.POS.x||followPos.y!==DRAG_START.POS.y)
         document.body.setAttribute('transitioning', true);
     else document.body.setAttribute('transitioning', false);
+
     //scroll document automatically when dragging
     //  if(moveEvent.clientY < 50){
     //     document.dispatchEvent(new WheelEvent('wheel', {
@@ -84,7 +84,6 @@ function onDrag(moveEvent, _startOut){
     //     document.dispatchEvent(new WheelEvent('wheel', {
     //     deltaY: 100 // adjust the value to control scroll speed
     // }));}
-    
 }
 async function beforeReleaseDrag(releaseEvent, _startOut){
     const{DRAG_START} = _startOut;

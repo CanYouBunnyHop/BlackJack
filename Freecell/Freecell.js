@@ -4,7 +4,7 @@ import { setAllElementWithLogic, popRandomFromArr, getCSSDeclaredValue, convertC
 import{ requestFrame, timer, restartCSSAnimation } from '../modules/CSSAnimationUtil.js';
 import {startDrag, slotLogic} from '../modules/MyDraggables.js';
 import { Memento, Caretaker } from '../modules/UndoPattern.js';
-import LinkedList from '../modules/LinkedList.js';
+//import LinkedList from '../modules/LinkedList.js';
 //free cell //one deck
 //tableus, alternating colors
 //command pattern with undo
@@ -35,6 +35,7 @@ const GAME = document.getElementById('game');
 const PROTO_CARD_CONTAINER = document.createElement('div');
 PROTO_CARD_CONTAINER.classList.add('card-container', 'draggable', 'slot'); //set dragging parent to card-container
 //CSS
+const __CARD_SCALE = getCSSDeclaredValue(GAME,'--card-scale', true);
 const __ANIM_MOVE_TIME = getCSSDeclaredValue(GAME, '--anim-move-time', true);
 const __CARD_HEIGHT = getCSSDeclaredValue(GAME, '--card-height', true);
 const __CARD_CASCADE_GAP = getCSSDeclaredValue(GAME,'--card-cascade-gap', true);
@@ -157,10 +158,17 @@ function createCard(_suit, _rank){
 
 //#region Freecell Main
 //
+function resizeCard(){
+    //1536 is standard default window size on desktop
+    let ratio = (window.innerWidth / 1536)*__CARD_SCALE; 
+    GAME.style.setProperty('--card-scale', ratio);
+}
+resizeCard();
+window.onresize = ()=>{resizeCard();}
 window.onload =()=>{
-    //dealCards();
+    dealCards();
     //debugDeal();
-    debugDealLong();
+    //debugDealLong();
     //It probably will never happen but it's possible starting deal is also winning deal
     FOUNDATIONS.forEach(el=>el._rankUp_='A'); //foundations only take Aces at the beginning
     setAllElementWithLogic('.slot', 'mouseover', (ev)=>slotLogic(ev, 'mouseout'));

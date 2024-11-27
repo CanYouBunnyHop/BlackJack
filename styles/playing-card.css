@@ -90,8 +90,10 @@
         display: block;
         margin: auto;
     }
+    /* .column[POS='MIDDLE']{outline: rgb(0, 238, 255) solid 1px;} 
+    .column[POS='LEFT']{outline: red solid 1px;} */
     /*#game .inner-card .suit{outline: rgb(40, 106, 9) solid 1.1px;} */
-    #game .card-front-display .column[POS='MIDDLE']{margin-left: -0.6em; margin-right: -0.6em;}
+    #game .card-front-display .column[POS='MIDDLE']{margin-left: -22%; margin-right: -22%;}
 
     #game .card-front-display .column[POS='MIDDLE'] :first-child{padding-top: 0.5em;}
     #game .card-front-display .column[POS='MIDDLE'] :last-child{padding-top: 0.5em;}

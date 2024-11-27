@@ -33,11 +33,12 @@ export class Card {
         let clone = PROTO_CARD.cloneNode(true);
         clone.classList.remove('prototype'); clone.id=null;
         clone._cardDisplay_= clone.querySelector('.card-front-display');
-
-        clone._rank_ = this.rank; // for easy access later for calculating points
+        // for easy access later for calculating points, attribute for css if needed
+        clone.setAttribute('suit', this.suit);
+        clone.setAttribute('rank', this.rank);
         clone._suit_ = this.suit;
+        clone._rank_ = this.rank; 
         //for solitaire stuff;
-
         let leftCol = clone._cardDisplay_.querySelector('.column[POS="LEFT"]');
         let midCol = clone._cardDisplay_.querySelector('.column[POS="MIDDLE"]');
         let rightCol = clone._cardDisplay_.querySelector('.column[POS="RIGHT"]');
