@@ -10,6 +10,7 @@
     z-index: 3;
 } */
 #game{
+    width: 100%;
     --card-scale : 4;
     --card-cascade-gap : calc(-28px * var(--card-scale));
     --anim-time-scale : 0.3;

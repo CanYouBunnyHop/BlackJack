@@ -1,7 +1,7 @@
-import {resetCardGame, Card, getSuitColor, getNeigbourRanks, CARD_DATA} from '../modules/PlayingCards.js';
+import {Card, getSuitColor, getNeigbourRanks, CARD_DATA} from '../modules/PlayingCards.js';
 import Vector2 from '../modules/Vector2.js';
 import { setAllElementWithLogic, popRandomFromArr, getCSSDeclaredValue, convertCSSPropertyToNumeric } from '../modules/MyMiscUtil.js';
-import{ requestFrame, timer, restartCSSAnimation } from '../modules/CSSAnimationUtil.js';
+import{ requestFrame, timer} from '../modules/CSSAnimationUtil.js';
 import {startDrag, slotLogic} from '../modules/MyDraggables.js';
 import { Memento, Caretaker } from '../modules/UndoPattern.js';
 //import LinkedList from '../modules/LinkedList.js';
@@ -160,9 +160,10 @@ function createCard(_suit, _rank){
 //
 function resizeCard(){
     //1536 is standard default window size on desktop
-    let ratio = (window.screen.width / 1536)*__CARD_SCALE; 
+    let gameWidth = getCSSDeclaredValue(GAME, 'width', true);
+    console.log(gameWidth);
+    let ratio = (gameWidth/ 1536)*__CARD_SCALE; 
     GAME.style.setProperty('--card-scale', ratio);
-    //document.getElementById('debug').innerHTML = window.screen.width;
 }
 resizeCard();
 window.onresize = ()=>{resizeCard();}
