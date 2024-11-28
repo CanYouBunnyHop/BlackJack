@@ -30,7 +30,7 @@ import { Memento, Caretaker } from '../modules/UndoPattern.js';
 //♠♣♥♦ 
 
 //#region globals
-const GAME = document.getElementById('game');
+//const GAME = document.getElementById('game');
 const PROTO_CARD_CONTAINER = document.createElement('div');
 PROTO_CARD_CONTAINER.classList.add('card-container', 'draggable', 'slot'); //set dragging parent to card-container
 //CSS
