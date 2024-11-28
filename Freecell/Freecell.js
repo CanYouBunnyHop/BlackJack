@@ -243,7 +243,6 @@ function dealCards(){
 }
 
 async function winCondition(){
-    return; //DEBUG
     let cells = [...CELLS];
     let cascades = [...CASCADES];
     let foundations = [...FOUNDATIONS];
