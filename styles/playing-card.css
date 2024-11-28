@@ -43,7 +43,7 @@
         box-sizing: border-box; /*MAKES BORDER STARTS IN BOX, RATHER OUTSIDE BOX*/
         border-radius: 5%;
         box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.741);
-        font-family: "Card"; font-weight: normal;
+        font-family: "Card", "Times"; font-weight: normal; /*Also need to change appearance*/
     }
     #game :not(.deck) .back-face{transform: rotateY(180deg);}
     #game .back-face{/*STYLES FOR CARD BACK*/

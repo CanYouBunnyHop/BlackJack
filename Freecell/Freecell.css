@@ -1,14 +1,14 @@
 /* html{
     scroll-behavior: smooth;
 } */
-#debug{
+/* #debug{
     position: fixed;
     font-size: 10rem;
     width: 100%;; 
     text-align: center; 
     color: blue;
     z-index: 3;
-}
+} */
 #game{
     --card-scale : 4;
     --card-cascade-gap : calc(-28px * var(--card-scale));

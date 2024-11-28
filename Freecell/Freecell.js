@@ -160,9 +160,9 @@ function createCard(_suit, _rank){
 //
 function resizeCard(){
     //1536 is standard default window size on desktop
-    let ratio = (window.innerWidth / 1536)*__CARD_SCALE; 
+    let ratio = (window.screen.width / 1536)*__CARD_SCALE; 
     GAME.style.setProperty('--card-scale', ratio);
-    document.getElementById('debug').innerHTML = window.innerWidth;
+    //document.getElementById('debug').innerHTML = window.screen.width;
 }
 resizeCard();
 window.onresize = ()=>{resizeCard();}
