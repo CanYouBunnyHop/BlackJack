@@ -1,14 +1,14 @@
 /* html{
     scroll-behavior: smooth;
 } */
-/* #debug{
+#debug{
     position: fixed;
     font-size: 10rem;
     width: 100%;; 
     text-align: center; 
-    color: blue;
+    color: rgb(11, 11, 104);
     z-index: 3;
-} */
+}
 #game{
     width: 100vw;
     

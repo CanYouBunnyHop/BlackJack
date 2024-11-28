@@ -161,13 +161,18 @@ function createCard(_suit, _rank){
 function resizeCard(){
     //1536 is standard default window size on desktop
     let gameWidth = getCSSDeclaredValue(GAME, 'width', true);
-    console.log(gameWidth);
     let ratio = (gameWidth/ 1536)*__CARD_SCALE; 
     GAME.style.setProperty('--card-scale', ratio);
+
+   
+
 }
 
 window.onresize = ()=>{resizeCard();}
 window.onload =()=>{
+    //debug
+    setTimeout(()=>document.getElementById('debug').innerHTML += 'd', 1000); 
+
     resizeCard();
     dealCards();
     //debugDeal();
