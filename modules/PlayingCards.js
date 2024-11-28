@@ -1,7 +1,7 @@
 const PROTO_SUIT = document.createElement('span'); PROTO_SUIT.classList.add('suit');
-const PROTO_CARD_CONTAINER = document.createElement('div'); PROTO_CARD_CONTAINER.classList.add('prototype');
+const PROTO_CARD_CONTAINER = document.createElement('div');
 PROTO_CARD_CONTAINER.innerHTML = `
-<div class="outer-card" id="proto-card" lock="false">
+<div class="outer-card" lock="false">
     <div class="inner-card flippable">
         <div class="front-face">
             <span class="rank" CORNER="TOP">A</span>
@@ -19,8 +19,8 @@ PROTO_CARD_CONTAINER.innerHTML = `
         </div>
     </div>
 </div>`;
-export const PROTO_CARD = PROTO_CARD_CONTAINER.querySelector('#proto-card'); //GET THE PROTOTYPE ELEMENT
-export function debugCardHTML(){alert("card = "+PROTO_CARD.innerHTML);}
+export const PROTO_CARD = PROTO_CARD_CONTAINER.firstElementChild; //GET THE PROTOTYPE ELEMENT
+export function debugCardHTML(){alert("card = "+ PROTO_CARD.innerHTML);}
 export const CARD_DATA = {
     ranks : ['A','2','3','4','5','6','7','8','9','10','J','Q','K'],
     suits : ['♠','♣','♥','♦'], //♠♣♥♦ 
@@ -29,7 +29,6 @@ export class Card {
     constructor(_suit, _rank) {this.suit = _suit; this.rank = _rank;}
     createElement(){
         let clone = PROTO_CARD.cloneNode(true);
-        clone.classList.remove('prototype'); clone.id=null;
         clone._cardDisplay_= clone.querySelector('.card-front-display');
         // for easy access later for calculating points, attribute for css if needed
         clone.setAttribute('suit', this.suit);
@@ -97,7 +96,7 @@ export function resetCardGame(){
 export function getSuitColor(_suit){
     // ♠♣♥♦ 
     switch(_suit){
-        case '♠': case '\u2663': return 'black';
+        case '♠': case '♣': return 'black';
         case '♥': case'♦': return 'red';
     }
 }
@@ -106,21 +105,22 @@ export function getSuitsWithOppositeColor(_suit, _returnsOpposite = true){
     if(_returnsOpposite){
         switch(color){
             case 'black': return ['♥','♦'];
-            case 'red': return ['♠','\u2663'];
+            case 'red': return ['♠','♣'];
         }
     }else{
         switch(color){
-            case 'black': return ['♠','\u2663'];
+            case 'black': return ['♠','♣'];
             case 'red': return ['♥','♦'];
         }
     }
-    return ['♠','\u2663','♥','♦']; //fallback
+    return ['♠','♣','♥','♦']; //fallback
 }
 export function getNeigbourRanks(_rank, _isLooping = false){
     let i = CARD_DATA.ranks.indexOf(_rank); //['A','2','3','4','5','6','7','8','9','10','J','Q','K']
     if(i === -1) console.error('Invalid Input : Input is not a valid Card Rank')
-    let downIndex = _isLooping ? CARD_DATA.ranks.length-1 :  i-1;
-    let upIndex = _isLooping ? 0 : i+1;
+    let lasti = CARD_DATA.ranks.length-1;
+    let downIndex = _isLooping && i===0 ? lasti :  i-1;
+    let upIndex = _isLooping && i===lasti ? 0 : i+1;
     return { //will be undefined if out of bounds
         rankDown : CARD_DATA.ranks[downIndex],
         rankUp : CARD_DATA.ranks[upIndex],

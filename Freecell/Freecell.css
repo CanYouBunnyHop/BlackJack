@@ -49,12 +49,6 @@
     margin-left: 1%; margin-right: 1%;
 }
 
-/* testing will be removed
-#game .cascade .cascade-start{width: var(--card-width); height: 30px;
-    outline: rgb(17, 255, 0) solid 1px;
-    display: inline-block;
-} */
-
 .card-container{border: 0px;padding: 0px;}
 
 #game .card-container .card-container[ancestor-type="cascade"]{ /*when card-container is within a card-container*/
