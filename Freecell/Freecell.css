@@ -1,5 +1,9 @@
-html{
+/* html{
     scroll-behavior: smooth;
+} */
+#debug{
+    width: 100%;; 
+    text-align: center; 
 }
 #game{
     --card-scale : 4;

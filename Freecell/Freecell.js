@@ -162,6 +162,7 @@ function resizeCard(){
     //1536 is standard default window size on desktop
     let ratio = (window.innerWidth / 1536)*__CARD_SCALE; 
     GAME.style.setProperty('--card-scale', ratio);
+    document.getElementById('debug').innerHTML = window.innerWidth;
 }
 resizeCard();
 window.onresize = ()=>{resizeCard();}
