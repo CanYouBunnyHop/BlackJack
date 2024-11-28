@@ -10,15 +10,15 @@ PROTO_CARD_CONTAINER.innerHTML = `
                 <span class="column" POS="LEFT"></span>
                 <span class="column" POS="MIDDLE"></span>
                 <span class="column" POS="RIGHT"></span>
-            </span><!--end card-front-display-->
+            </span>
             <span class="suit" CORNER="BOT"></span>
             <span class="rank" CORNER="BOT">A</span>
-        </div><!--end front-face-->
+        </div>
         <div class="back-face">
             <span class="card-back-display">CARD</span>
-        </div><!--end back-face-->
-    </div><!--end inner-card-->
-</div><!--end outer-card-->`;
+        </div>
+    </div>
+</div>`;
 export const PROTO_CARD = PROTO_CARD_CONTAINER.querySelector('#proto-card'); //GET THE PROTOTYPE ELEMENT
 export function debugCardHTML(){alert("card = "+PROTO_CARD.innerHTML);}
 export const CARD_DATA = {
