@@ -1,4 +1,4 @@
-alert('load Freecell.js');
+window.onload=()=>alert('load Freecell.js');
 // import {Card, getSuitColor, getNeigbourRanks, CARD_DATA, debugCardHTML} from '../modules/PlayingCards.js';
 // import Vector2 from '../modules/Vector2.js';
 // import { setAllElementWithLogic, popRandomFromArr, getCSSDeclaredValue, convertCSSPropertyToNumeric } from '../modules/MyMiscUtil.js';
