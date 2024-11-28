@@ -2,8 +2,12 @@
     scroll-behavior: smooth;
 } */
 #debug{
+    position: fixed;
+    font-size: 10rem;
     width: 100%;; 
     text-align: center; 
+    color: blue;
+    z-index: 3;
 }
 #game{
     --card-scale : 4;
