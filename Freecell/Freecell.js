@@ -165,9 +165,10 @@ function resizeCard(){
     let ratio = (gameWidth/ 1536)*__CARD_SCALE; 
     GAME.style.setProperty('--card-scale', ratio);
 }
-resizeCard();
+
 window.onresize = ()=>{resizeCard();}
 window.onload =()=>{
+    resizeCard();
     dealCards();
     //debugDeal();
     //debugDealLong();

@@ -4,15 +4,15 @@ PROTO_CARD_CONTAINER.innerHTML = `
 <div class="outer-card" id='proto-card' lock="false">
     <div class="inner-card flippable">
         <div class="front-face">
-            <span class="rank"CORNER='TOP'>A</span>
-            <span class="suit"CORNER='TOP'></span>
+            <span class="rank" CORNER='TOP'>A</span>
+            <span class="suit" CORNER='TOP'></span>
             <span class="card-front-display">
-                <span class="column"POS='LEFT'></span>
-                <span class="column"POS='MIDDLE'></span>
-                <span class="column"POS='RIGHT'></span>
+                <span class="column" POS='LEFT'></span>
+                <span class="column" POS='MIDDLE'></span>
+                <span class="column" POS='RIGHT'></span>
             </span><!--end card-front-display-->
-            <span class="suit"CORNER='BOT'></span>
-            <span class="rank"CORNER='BOT'>A</span>
+            <span class="suit" CORNER='BOT'></span>
+            <span class="rank" CORNER='BOT'>A</span>
         </div><!--end front-face-->
         <div class="back-face">
             <span class="card-back-display">CARD</span>
