@@ -167,11 +167,11 @@ function resizeCard(){
    
 
 }
-
+var debugDiv = document.getElementById('debug');
 window.onresize = ()=>{resizeCard();}
 window.onload =()=>{
     //debug
-    setTimeout(()=>document.getElementById('debug').innerHTML += 'd', 1000); 
+    setTimeout(()=>debugDiv.innerHTML += 'd', 1000); 
 
     resizeCard();
     dealCards();
