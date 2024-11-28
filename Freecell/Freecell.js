@@ -1,4 +1,4 @@
-import {Card, getSuitColor, getNeigbourRanks, CARD_DATA} from '../modules/PlayingCards.js';
+import {Card, getSuitColor, getNeigbourRanks, CARD_DATA, debugCardHTML} from '../modules/PlayingCards.js';
 import Vector2 from '../modules/Vector2.js';
 import { setAllElementWithLogic, popRandomFromArr, getCSSDeclaredValue, convertCSSPropertyToNumeric } from '../modules/MyMiscUtil.js';
 import{ requestFrame, timer} from '../modules/CSSAnimationUtil.js';
@@ -163,13 +163,12 @@ function resizeCard(){
     let gameWidth = getCSSDeclaredValue(GAME, 'width', true);
     let ratio = (gameWidth/ 1536)*__CARD_SCALE; 
     GAME.style.setProperty('--card-scale', ratio);
-
-   
-
 }
 var debugDiv = document.getElementById('debug');
 window.onresize = ()=>{resizeCard();}
 window.onload =()=>{
+    debugCardHTML();
+    
     //debug
     setTimeout(()=>debugDiv.innerHTML += 'd', 1000); 
 

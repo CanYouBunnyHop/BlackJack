@@ -20,9 +20,7 @@ PROTO_CARD_CONTAINER.innerHTML = `
     </div><!--end inner-card-->
 </div><!--end outer-card-->`;
 export const PROTO_CARD = PROTO_CARD_CONTAINER.querySelector('#proto-card'); //GET THE PROTOTYPE ELEMENT
-// export const SUITS_DATA = {
-
-// };
+export function debugCardHTML(){alert("card = "+PROTO_CARD.innerHTML);}
 export const CARD_DATA = {
     ranks : ['A','2','3','4','5','6','7','8','9','10','J','Q','K'],
     suits : ['♠','♣','♥','♦'], //♠♣♥♦ 
