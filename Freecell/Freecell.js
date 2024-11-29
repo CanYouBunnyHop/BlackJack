@@ -1,35 +1,10 @@
 alert('load Freecell.js');
-import {Card, getSuitColor, getNeigbourRanks, CARD_DATA, debugCardHTML} from '../modules/PlayingCards.js';
-import Vector2 from '../modules/Vector2.js';
-import { setAllElementWithLogic, popRandomFromArr, getCSSDeclaredValue, convertCSSPropertyToNumeric } from '../modules/MyMiscUtil.js';
-import{ requestFrame, timer} from '../modules/CSSAnimationUtil.js';
-import {startDrag, slotLogic} from '../modules/MyDraggables.js';
-import { Memento, Caretaker } from '../modules/UndoPattern.js';
-
-//free cell //one deck
-//tableus, alternating colors
-//command pattern with undo
-//with seed generation //use PRNG to determines deals?
-
-//52! possible combinations, 
-//out of 8.6 billion deals, 102,075 deals are impossible
-
-//The number of sequenced cards you can move is equivalent to the number of open free cells plus one. For example:
-// If there are four free cells open, you can move five cards.
-// If there are three free cells open, you can move four cards.
-// If there are two free cells open, you can move three cards.
-// If there is one free cell open, you can move two cards.
-// If there are no free cells open, you can move one card.
-
-//There is one exception to this. 
-
-// If you have an open column in addition to free cells, 
-// you can move double the number of cards you can move normally. 
-// For example, if you have 1 free cell open and 1 empty tableau column, 
-// you can effectively move 4 cards (2 cards for the 1 free cell, multiplied by two). 
-// This applies as long as you are not moving cards into the actual empty column, 
-// in which case you are unable to take advantage of the doubling.
-//♠♣♥♦ 
+import { Card, getSuitColor, getNeigbourRanks, CARD_DATA } from "../modules/PlayingCards.js";
+import Vector2 from "../modules/Vector2.js";
+import { setAllElementWithLogic, popRandomFromArr, getCSSDeclaredValue, convertCSSPropertyToNumeric } from "../modules/MyMiscUtil.js";
+import { requestFrame, timer } from "../modules/CSSAnimationUtil.js";
+import { startDrag, slotLogic } from "../modules/MyDraggables.js";
+import { Memento, Caretaker } from "../modules/UndoPattern.js";
 
 //#region globals
 const GAME = document.getElementById('game');
@@ -338,7 +313,7 @@ async function releaseDrag(b4ReleaseOut){
                 return isRankDown && isDiffColor && dragCount <= allowedDragCount;
             case _: return false;
         }
-    })(); console.log('VALID MOVE',IS_VALID_MOVE);
+    })(); //console.log('VALID MOVE',IS_VALID_MOVE);
 
     const NEW_DESTINATION_SLOT = IS_VALID_MOVE ? dest : DRAG_START.SLOT;
     //save start position if move is valid and is not same slot
@@ -368,7 +343,7 @@ async function releaseDrag(b4ReleaseOut){
 async function moveCardWithTransition(_card, _movePosition, _destSlot){ 
     let startRect =  _card.getBoundingClientRect();
     let startPos = new Vector2(startRect.x, startRect.y);
-    _card.style.position = 'fixed';
+    _card.style.position = 'relative';
     _card.style.left = `${startPos.x}px`;
     _card.style.top = `${startPos.y}px`;
     GAME.appendChild(_card);
