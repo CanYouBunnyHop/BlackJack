@@ -1,5 +1,5 @@
 
-
+alert('import miscUtil');
 export function setAllElementWithLogic(selector='.className', eventName='mouseenter', logic=ev=>{}){
     let elmnts = document.querySelectorAll(selector);
     [...elmnts].forEach(el=>{el.addEventListener(eventName, logic)});

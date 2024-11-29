@@ -1,3 +1,4 @@
+alert('import CSSAnimUtil');
 export async function requestFrame(callback=()=>{}, frameDelay=1){
     let requestOneFrame = (callback=()=>{})=>{
         return new Promise(resolve => {

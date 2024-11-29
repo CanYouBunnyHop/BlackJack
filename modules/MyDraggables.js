@@ -1,3 +1,4 @@
+alert('import MyDraggables');
 import Vector2 from "./Vector2.js";
 import { timer, requestFrame} from "./CSSAnimationUtil.js";
 
