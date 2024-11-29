@@ -1,10 +1,10 @@
 alert('load Freecell.js');
-import Vector2 from "../modules/Vector2.js";
-import { Card, getSuitColor, getNeigbourRanks, CARD_DATA } from "../modules/PlayingCards.js";
-import { setAllElementWithLogic, popRandomFromArr, getCSSDeclaredValue, convertCSSPropertyToNumeric } from "../modules/MyMiscUtil.js";
-import { requestFrame, timer } from "../modules/CSSAnimationUtil.js";
-import { startDrag, slotLogic } from "../modules/MyDraggables.js";
-import { Memento, Caretaker } from "../modules/UndoPattern.js";
+import Vector2 from "Vector2";
+import { Card, getSuitColor, getNeigbourRanks, CARD_DATA } from "PlayingCards";
+import { setAllElementWithLogic, popRandomFromArr, getCSSDeclaredValue, convertCSSPropertyToNumeric } from "MyMiscUtil";
+import { requestFrame, timer } from "CSSAnimationUtil";
+import { startDrag, slotLogic } from "MyDraggables";
+import { Memento, Caretaker } from "UndoPattern";
 
 //#region Globals
 const GAME = document.getElementById('game');
