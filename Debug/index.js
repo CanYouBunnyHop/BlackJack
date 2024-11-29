@@ -1,4 +1,4 @@
-import Vector2 from "../modules/Vector2";
+import Vector2 from "../modules/Vector2.js";
 const divs = document.body.querySelectorAll('div');
 divs[0].innerHTML = `
 <div class="outer-card" id="proto-card" lock="false">
