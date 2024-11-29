@@ -1,6 +1,6 @@
 alert('load Freecell.js');
 import {Card, getSuitColor, getNeigbourRanks, CARD_DATA, debugCardHTML} from '../modules/PlayingCards.js';
-import Vector2 from '../modules/Vector2.js';
+//import Vector2 from '../modules/Vector2.js';
 import { setAllElementWithLogic, popRandomFromArr, getCSSDeclaredValue, convertCSSPropertyToNumeric } from '../modules/MyMiscUtil.js';
 import{ requestFrame, timer} from '../modules/CSSAnimationUtil.js';
 import {startDrag, slotLogic} from '../modules/MyDraggables.js';
