@@ -1,12 +1,12 @@
 alert('load Freecell.js');
-import { Card, getSuitColor, getNeigbourRanks, CARD_DATA } from "../modules/PlayingCards.js";
 import Vector2 from "../modules/Vector2.js";
+import { Card, getSuitColor, getNeigbourRanks, CARD_DATA } from "../modules/PlayingCards.js";
 import { setAllElementWithLogic, popRandomFromArr, getCSSDeclaredValue, convertCSSPropertyToNumeric } from "../modules/MyMiscUtil.js";
 import { requestFrame, timer } from "../modules/CSSAnimationUtil.js";
 import { startDrag, slotLogic } from "../modules/MyDraggables.js";
 import { Memento, Caretaker } from "../modules/UndoPattern.js";
 
-//#region globals
+//#region Globals
 const GAME = document.getElementById('game');
 const PROTO_CARD_CONTAINER = document.createElement('div');
 PROTO_CARD_CONTAINER.classList.add('card-container', 'draggable', 'slot'); //set dragging parent to card-container
@@ -140,10 +140,7 @@ function resizeCard(){
     let ratio = (gameWidth/ 1536)*__CARD_SCALE; 
     GAME.style.setProperty('--card-scale', ratio);
 }
-
-debugCardHTML();
 alert('outside onload sucessful');
-
 // var debugDiv = document.getElementById('debug');
 window.onresize = ()=>{resizeCard();}
 window.onload =()=>{
@@ -188,7 +185,6 @@ function dealCardWithID(_cascadeAncestor, ..._cardIds){
         let rank = cardId.join('');
         _cascadeAncestor._tail_._appendCard(createCard(suit, rank));
     }
-
 }
 function debugDeal(){
     let cascades = [...CASCADES];
@@ -364,7 +360,30 @@ async function endTransition(_releaseOut){//after transition ends
 //#endregion
 
 //
-//#region Util 2
+//#region Notes
 //
+//free cell //one deck
+//tableus, alternating colors
+//command pattern with undo
+//with seed generation //use PRNG to determines deals?
 
+//52! possible combinations, 
+//out of 8.6 billion deals, 102,075 deals are impossible
+
+//The number of sequenced cards you can move is equivalent to the number of open free cells plus one. For example:
+// If there are four free cells open, you can move five cards.
+// If there are three free cells open, you can move four cards.
+// If there are two free cells open, you can move three cards.
+// If there is one free cell open, you can move two cards.
+// If there are no free cells open, you can move one card.
+
+//There is one exception to this. 
+
+// If you have an open column in addition to free cells, 
+// you can move double the number of cards you can move normally. 
+// For example, if you have 1 free cell open and 1 empty tableau column, 
+// you can effectively move 4 cards (2 cards for the 1 free cell, multiplied by two). 
+// This applies as long as you are not moving cards into the actual empty column, 
+// in which case you are unable to take advantage of the doubling.
+//♠♣♥♦ 
 //#endregion
