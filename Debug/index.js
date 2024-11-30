@@ -1,5 +1,5 @@
 alert('loaded index.js');
-import Vector2 from "../modules/Vector2.js";
+//import Vector2 from "../modules/Vector2.js";
 import { Card, getSuitColor, getNeigbourRanks, CARD_DATA } from "../modules/PlayingCards.js";
 //import { setAllElementWithLogic, popRandomFromArr, getCSSDeclaredValue, convertCSSPropertyToNumeric } from "../modules/MyMiscUtil.js";
 //import { requestFrame, timer } from "../modules/CSSAnimationUtil.js";
