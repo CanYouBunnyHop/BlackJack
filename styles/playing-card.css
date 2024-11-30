@@ -27,7 +27,8 @@
     .outer-card{width: var(--card-width); height: var(--card-height);
         display: inline-block; white-space: nowrap; /*KEEP CARDS ON THE SAME ROW, Doesn't work*/
     }
-    #game .dragging{pointer-events: NONE !important; /*READ MOUSE EVENT UNDER THE DRAGGABLE*/}
+    /*READ MOUSE EVENT UNDER THE DRAGGABLE*/
+    #game .dragging{pointer-events: NONE !important; touch-action: NONE !important; }
     
     #game .inner-card{ width: inherit; height: inherit;
         /*FLIP ANIMATION*/

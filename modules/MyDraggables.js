@@ -6,26 +6,26 @@ export function slotLogic(event, unhoverEvent='mouseleave'){
     let capacity = slot.getAttribute('capacity') ?? Infinity;
     if(slot.children.length >= capacity) return;
     slot.classList.add('active-slot');
-    slot.addEventListener(unhoverEvent, _event=>{ slot.classList.remove('active-slot')});
+    slot.addEventListener(unhoverEvent, async _event=>{
+        await requestFrame(()=>{},2); 
+        slot.classList.remove('active-slot');
+    });
 }
 export async function startDrag(mdownEvent, targetParentElement, animationTime = 0,
     afterStartDrag = async (_startOut)=>{return {..._startOut}},
     releaseDrag = async(_b4ReleaseOut)=>{return {..._b4ReleaseOut}}, 
     endTransition= async(_releaseOut)=>{return {..._releaseOut}}, _allowsDrag = true){//start drag chain function
         const DRAG_TARGET = mdownEvent.target.closest('.draggable');
-        const DRAG_START_SLOT = mdownEvent.target.parentElement.closest('.slot');
+        const DRAG_START_SLOT = DRAG_TARGET.parentElement.closest('.slot');
         const dragLock = (DRAG_TARGET.getAttribute('lock') ?? 'false')==='true';
         if(!DRAG_START_SLOT || document.body.getAttribute('transitioning') === 'true' || dragLock || !_allowsDrag) 
             return null;
-
         document.body.setAttribute('drag-active', true);
         const INITIAL_TRANSITION = DRAG_TARGET.style.transition;
-   
         requestFrame(()=>{
             DRAG_TARGET.style.transition = `left 0s, top 0s, margin ${animationTime}s`;
             DRAG_TARGET.classList.add('dragging');
         }); //delayed for css animation
-
         let _rect = DRAG_TARGET.getBoundingClientRect();
         const START_OUT = {
             DRAG_TARGET, 
@@ -42,16 +42,20 @@ export async function startDrag(mdownEvent, targetParentElement, animationTime =
         onDrag(mdownEvent, START_OUT);
         const DRAGGING_REF = (moveEvent) => onDrag(moveEvent, START_OUT);
         //when mouse is moving and when scrolling
+
         document.addEventListener('mousemove', DRAGGING_REF);
-        const SCROLL_REF = ()=>{};
-        document.addEventListener('scroll', SCROLL_REF);
+        //document.addEventListener('touchmove', DRAGGING_REF);
+
         //ReleaseDrag
         const ON_MOUSE_UP_REF = onMouseUp;
         document.addEventListener('mouseup', ON_MOUSE_UP_REF);
+        //document.addEventListener('touchend', ON_MOUSE_UP_REF);
         async function onMouseUp(releaseEvent){
             document.removeEventListener('mouseup', ON_MOUSE_UP_REF);
+            //document.removeEventListener('touchend', ON_MOUSE_UP_REF);
             document.body.setAttribute('drag-active', false);
             document.removeEventListener('mousemove', DRAGGING_REF);
+            //document.removeEventListener('touchmove', DRAGGING_REF);
             DRAG_TARGET.style.transition = INITIAL_TRANSITION;
             requestFrame(()=>DRAG_TARGET.classList.remove('dragging'));
             const B4RELEASE_OUT = await beforeReleaseDrag(releaseEvent, START_OUT);
@@ -63,10 +67,11 @@ export async function startDrag(mdownEvent, targetParentElement, animationTime =
 }
 function onDrag(moveEvent, _startOut){
     const{DRAG_TARGET, DRAG_START} = _startOut;
-    moveEvent.preventDefault();
+    //moveEvent.preventDefault();
     let curMPos = new Vector2(moveEvent.clientX, moveEvent.clientY);
     let mPosDelta = curMPos.subtract(DRAG_START.MPOS);
     let followPos = DRAG_START.POS.add(mPosDelta);
+    //console.log(followPos);
     //follow mouse
     DRAG_TARGET.style.position = 'fixed';
     DRAG_TARGET.style.left = `${followPos.x}px`;
@@ -103,3 +108,28 @@ async function beforeReleaseDrag(releaseEvent, _startOut){
         },
     };
 }
+export function touchToMouseEvent(event) {
+    if (event.touches.length > 1) return; //allow default multi-touch gestures to work
+    var touch = event.changedTouches[0];
+    var type = "";
+    switch (event.type) {
+        case "touchstart":type ="mousedown";break;
+        case "touchmove":type="mousemove";break;
+        case "touchend":type="mouseup";break;
+        default: return;
+    }
+    var simulatedEvent = new MouseEvent(type, {
+        bubbles: true,
+        cancelable: false,
+        view: window,
+        screenX: touch.screenX,
+        screenY: touch.screenY,
+        clientX: touch.clientX,
+        clientY: touch.clientY,
+        button: 0, // usually 0 for the left mouse button
+        buttons: 1, // indicates the left mouse button is being pressed
+    });
+    event.stopPropagation();
+    event.preventDefault();
+    touch.target.dispatchEvent(simulatedEvent);
+};

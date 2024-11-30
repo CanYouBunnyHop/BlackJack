@@ -157,7 +157,9 @@ function getCardsFromHand(hand){
 const PLAYER_HAND = GAME.querySelector('#player-hand');
 const DEALER_HAND = GAME.querySelector('#dealer-hand');
 //WHEN PAGE FINISH LOADING //PROBABLY WANT TO USE DEFERED ON THE SCRIPT INSTEAD
-window.onload = setAllElementWithLogic('.slot', 'mouseenter', (ev)=>slotLogic(ev, 'mouseleave'));
+window.onload = ()=>{ 
+    setAllElementWithLogic('.slot', 'mouseenter', (ev)=>slotLogic(ev, 'mouseleave'));
+}
 
 function popCardFromDeck(_targetHand, _deckSelector = '.deck:hover', flipOver=true, isDraggable=true){//TEST
     if(document.body.getAttribute('transitioning') === 'true') return;

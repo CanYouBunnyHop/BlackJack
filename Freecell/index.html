@@ -10,11 +10,11 @@
     <title>Solitaire</title>
 </head>
 <body>
-    <!-- <div id="debug">change</div> -->
-    <div id="game" style="outline: rgb(76, 0, 255) solid 3px;">
+    <div id="debug">debug:</div>
+    <div id="game">
         <div class="buttons">
-            Auto-Play<input type="checkbox">
-            <button type="button" onmousedown="undoButton()" id="undo">Undo</button>
+            <!-- Auto-Play<input type="checkbox"> -->
+            <button type="button" onmousedown="undoButton()" ontouchstart="undoButton()" id="undo">Undo</button>
         </div>
         <div class="top-row">
             <div class="cells-row">

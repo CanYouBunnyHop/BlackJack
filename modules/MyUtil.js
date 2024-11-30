@@ -16,10 +16,8 @@ export function getCSSDeclaredValue(_targetEl, _propertyName, _convertToNumeric 
     return _convertToNumeric ? convertCSSPropertyToNumeric(val) : val;
 }
 function convertCSSPropertyToNumeric(initVal){
-    var value = initVal
-        .replace(/^calc\(/,'')
-        .replace(/\)$/,'');
-    function removeUnits(_value, _unit){
+    var value = initVal.replace(/^calc\(/,'').replace(/\)$/,'');
+    let removeUnits = (_value, _unit)=>{
         //ios Safari don't support look behind
         let unitRegex = new RegExp(`\\d+${_unit}\\b`, 'g');  
         let matches = _value.match(unitRegex);

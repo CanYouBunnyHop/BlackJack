@@ -1,4 +1,3 @@
-alert('import Vector2.js');
 export default class Vector2 {
     constructor(_x, _y) { this.x = _x; this.y = _y; }
     add(other) { return new Vector2(this.x + other.x, this.y + other.y); }

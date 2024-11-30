@@ -2,7 +2,7 @@ import Vector2 from "../modules/Vector2.js";
 import { Card, getSuitColor, getNeigbourRanks, CARD_DATA } from "../modules/PlayingCards.js";
 import { setAllElementWithLogic, popRandomFromArr, getCSSDeclaredValue} from "../modules/MyUtil.js";
 import { requestFrame, timer } from "../modules/CSSAnimationUtil.js";
-import { startDrag, slotLogic } from "../modules/MyDraggables.js";
+import { startDrag, slotLogic, touchToMouseEvent} from "../modules/MyDraggables.js";
 import { Memento, Caretaker } from "../modules/UndoPattern.js";
 
 //#region Globals
@@ -74,7 +74,7 @@ function cardAndAncestorLogic(el){
             return el.closest('.ancestor');
         }},
         _ancestorType_ :{get : ()=>{
-            return el._ancestor_.getAttribute('ancestor-type');
+            return el.closest('.ancestor')?.getAttribute('ancestor-type');
         }},
         _isValid_ : {get : ()=>{
             let curCard = el;
@@ -118,7 +118,7 @@ function createCard(_suit, _rank){
     //DEBUG SET ATTRIBUTE
     containerClone._suit_ = _suit;
     containerClone._rank_ = _rank;
-    containerClone.id = _suit+_rank;
+    containerClone.id = _suit + _rank;
     //set rankdown and rankup
     let o_ranks = getNeigbourRanks(_rank);
     containerClone._rankUp_ = o_ranks.rankUp;
@@ -137,25 +137,22 @@ function resizeCard(){
     //1536 is standard default window size on desktop
     let gameWidth = getCSSDeclaredValue(GAME, 'width', true);
     let ratio = (gameWidth/ 1536)*__CARD_SCALE; 
+    console.log(__CARD_SCALE);
     GAME.style.setProperty('--card-scale', ratio);
 }
-alert('outside onload sucessful');
-// var debugDiv = document.getElementById('debug');
 window.onresize = ()=>{resizeCard();}
 window.onload =()=>{
-   alert('onload sucessful');
-
-    //debug
-    //setTimeout(()=>debugDiv.innerHTML += 'd', 1000); 
-
     resizeCard();
     dealCards();
     //debugDeal();
     //debugDealLong();
     //It probably will never happen but it's possible starting deal is also winning deal
     FOUNDATIONS.forEach(el=>el._rankUp_='A'); //foundations only take Aces at the beginning
-    setAllElementWithLogic('.slot', 'mouseover', (ev)=>slotLogic(ev, 'mouseout'));
+    setAllElementWithLogic('.slot', 'pointerenter', (ev)=>slotLogic(ev, 'pointerleave'));
     setAllElementWithLogic('.draggable', 'mousedown', solitaireStartDrag);
+    setAllElementWithLogic('.draggable', 'touchstart', touchToMouseEvent);
+    document.ontouchmove = touchToMouseEvent;
+    document.ontouchend = touchToMouseEvent;
 
     let _curHeight = getCSSDeclaredValue(GAME, 'height', true);
 
@@ -269,15 +266,17 @@ function getAllowedDragCount(){
 //
 function solitaireStartDrag(mdownEvent){
     mdownEvent.stopPropagation();
+    
     let dTarget = mdownEvent.target.closest('.draggable');
+    document.getElementById('debug').innerHTML += dTarget.id;
+
     let dragCount = getInnerCount(dTarget);
     let allowedDragCount = getAllowedDragCount();
     let allowDrag = isValidCascade(dTarget) && dragCount <= allowedDragCount;
     startDrag(mdownEvent, GAME, __ANIM_MOVE_TIME, afterStartDrag , releaseDrag, endTransition, allowDrag);
 }
 async function afterStartDrag(_startOut) {
-    const {DRAG_TARGET} = _startOut;
-    
+    //const {DRAG_TARGET} = _startOut;
     return {..._startOut};
 }
 async function releaseDrag(b4ReleaseOut){
@@ -288,12 +287,13 @@ async function releaseDrag(b4ReleaseOut){
     let dest_type = dest._ancestorType_;
 
     let dragCount = getInnerCount(DRAG_TARGET);
-    let ancestorInnerCount = getInnerCount(dest.closest('.slot.ancestor')); 
+    
     const IS_VALID_MOVE = (()=>{
         //return true if is foundation ancestor
         let isDestAncestor = dest.classList.contains('ancestor');
         switch(dest_type){
             case 'cell': 
+                let ancestorInnerCount = getInnerCount(dest.closest('.slot.ancestor')); 
                 return dragCount === 1 && ancestorInnerCount === 0;
             case 'foundation':
                 let isSameSuit = isDestAncestor ? true : DRAG_TARGET._suit_ === dest._suit_; 
@@ -305,9 +305,9 @@ async function releaseDrag(b4ReleaseOut){
                 //lose the multiplier if placing into empty ancestor cascade
                 let allowedDragCount = isDestAncestor ? getAllowedDragCount()/2 : getAllowedDragCount(); 
                 return isRankDown && isDiffColor && dragCount <= allowedDragCount;
-            case _: return false;
+            default: return false;
         }
-    })(); //console.log('VALID MOVE',IS_VALID_MOVE);
+    })(); console.log('VALID MOVE',IS_VALID_MOVE);
 
     const NEW_DESTINATION_SLOT = IS_VALID_MOVE ? dest : DRAG_START.SLOT;
     //save start position if move is valid and is not same slot
@@ -318,13 +318,13 @@ async function releaseDrag(b4ReleaseOut){
     const DESTINATION_SLOT_TYPE = NEW_DESTINATION_SLOT._ancestorType_;
     
     const MOVE_OFFSET = (()=>{//Immediate invoke
-        
         switch(DESTINATION_SLOT_TYPE){
             case 'cell': return borderOffset;
             case 'foundation': return IS_DEST_CARD_CON ? Vector2.zero : borderOffset;
             case 'cascade': 
                 let _cascadeOffset = __CARD_HEIGHT + __CARD_CASCADE_GAP;
                 return IS_DEST_CARD_CON? new Vector2(0, _cascadeOffset+4): borderOffset;//magic number 4
+            default: return Vector2.zero;
     }})();////Immediate invoke ends
     let _destRect = NEW_DESTINATION_SLOT.getBoundingClientRect();
     const MOVE_POS = new Vector2(_destRect.x, _destRect.y).add(MOVE_OFFSET); 
@@ -337,7 +337,7 @@ async function releaseDrag(b4ReleaseOut){
 async function moveCardWithTransition(_card, _movePosition, _destSlot){ 
     let startRect =  _card.getBoundingClientRect();
     let startPos = new Vector2(startRect.x, startRect.y);
-    _card.style.position = 'relative';
+    _card.style.position = 'fixed';
     _card.style.left = `${startPos.x}px`;
     _card.style.top = `${startPos.y}px`;
     GAME.appendChild(_card);

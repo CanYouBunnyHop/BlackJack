@@ -1,4 +1,3 @@
-alert('import UndoPattern');
 export class Memento{ //the object where it's state is being saved
     constructor(...data){
         this.data = data; 
