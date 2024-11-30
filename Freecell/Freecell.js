@@ -1,10 +1,9 @@
-alert('load Freecell.js');
-import Vector2 from "Vector2";
-import { Card, getSuitColor, getNeigbourRanks, CARD_DATA } from "PlayingCards";
-import { setAllElementWithLogic, popRandomFromArr, getCSSDeclaredValue, convertCSSPropertyToNumeric } from "MyMiscUtil";
-import { requestFrame, timer } from "CSSAnimationUtil";
-import { startDrag, slotLogic } from "MyDraggables";
-import { Memento, Caretaker } from "UndoPattern";
+import Vector2 from "../modules/Vector2.js";
+import { Card, getSuitColor, getNeigbourRanks, CARD_DATA } from "../modules/PlayingCards.js";
+import { setAllElementWithLogic, popRandomFromArr, getCSSDeclaredValue} from "../modules/MyUtil.js";
+import { requestFrame, timer } from "../modules/CSSAnimationUtil.js";
+import { startDrag, slotLogic } from "../modules/MyDraggables.js";
+import { Memento, Caretaker } from "../modules/UndoPattern.js";
 
 //#region Globals
 const GAME = document.getElementById('game');
@@ -158,10 +157,9 @@ window.onload =()=>{
     setAllElementWithLogic('.slot', 'mouseover', (ev)=>slotLogic(ev, 'mouseout'));
     setAllElementWithLogic('.draggable', 'mousedown', solitaireStartDrag);
 
-    let _curStyle = getComputedStyle(GAME);
-    let _curHeight = _curStyle.getPropertyValue('height');
-    let _curHeightNumeric = convertCSSPropertyToNumeric(_curHeight);
-    let totalHeight = _curHeightNumeric + (__CARD_HEIGHT + __CARD_CASCADE_GAP)*22;
+    let _curHeight = getCSSDeclaredValue(GAME, 'height', true);
+
+    let totalHeight = _curHeight + (__CARD_HEIGHT + __CARD_CASCADE_GAP)*22;
     GAME.style.height = `${totalHeight}px`; //resize game height to tallest possible, avoid resizing
 };
 //Undo button 

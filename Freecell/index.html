@@ -6,40 +6,6 @@
     <link rel="stylesheet" href="../styles/dark-theme.css">
     <link rel="stylesheet" href="../styles/playing-card.css"> <!--Link to playing-card.css-->
     <link rel="stylesheet" href="./Freecell.css"> <!--Link to playing-card.css-->
-    <script>
-        window.onerror = function(error,file,line,column,stack) {
-            let stackTrace = ( stack.stack && stack.stack.toString ? stack.stack.toString() : stack );
-            let errorText = `
-                ${error}
-                ${file}:${line}:${column}
-                ${stackTrace}
-            `;       
-
-            // either "log" the error to the html
-            let errorNode = document.createElement('div');
-            errorNode.style.color = 'red';
-            errorNode.style.whiteSpace = 'pre';
-            errorNode.textContent = errorText;
-            document.body.appendChild(errorNode);
-            //console.log("error!",{a,b,c,d,e,f,g})
-
-            // or just print it 
-            alert(errorText);
-        }
-        alert('local');
-    </script>
-    <script type="importmap">{
-            "imports":{
-                "Vector2":"../modules/Vector2.js",
-                "PlayingCards":"../modules/PlayingCards.js",
-                "MyMiscUtil":"../modules/MyMiscUtil.js",
-                "CSSAnimationUtil":"../modules/CSSAnimationUtil.js",
-                "MyDraggables":"../modules/MyDraggables.js",
-                "UndoPattern":"../modules/UndoPattern.js"
-            }
-        }
-        
-    </script>
     <script type="module" src="./Freecell.js"></script>
     <title>Solitaire</title>
 </head>

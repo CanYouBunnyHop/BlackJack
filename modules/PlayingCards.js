@@ -1,4 +1,3 @@
-alert('import PlayingCards.js');
 const PROTO_SUIT = document.createElement('span'); PROTO_SUIT.classList.add('suit');
 const PROTO_CARD_CONTAINER = document.createElement('div');
 PROTO_CARD_CONTAINER.innerHTML = `

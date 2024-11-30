@@ -1,0 +1,22 @@
+<script>
+    //copied from nullPainter
+    window.onerror = function(error,file,line,column,stack) {
+        let stackTrace = ( stack.stack && stack.stack.toString ? stack.stack.toString() : stack );
+        let errorText = `
+            ${error}
+            ${file}:${line}:${column}
+            ${stackTrace}
+        `;       
+        // either "log" the error to the html
+        let errorNode = document.createElement('div');
+        errorNode.style.color = 'red';
+        errorNode.style.whiteSpace = 'pre';
+        errorNode.textContent = errorText;
+        document.body.appendChild(errorNode);
+        //console.log("error!",{a,b,c,d,e,f,g})
+
+        // or just print it 
+        alert(errorText);
+    }
+    alert('local');
+</script>

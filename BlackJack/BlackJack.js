@@ -1,12 +1,11 @@
 //
 //PLAYING CARD GAMES SHARED LOGIC
 //
-
 import { currentDeck, resetCardGame, PROTO_CARD } from '../modules/PlayingCards.js';
 import { BaseState, BaseStateMachine } from '../modules/StateMachinePattern.js';
 import Vector2 from '../modules/Vector2.js';
 import { slotLogic, startDrag } from '../modules/MyDraggables.js';
-import { setAllElementWithLogic, popRandomFromArr, getCSSDeclaredValue } from '../modules/MyMiscUtil.js';
+import { setAllElementWithLogic, popRandomFromArr, getCSSDeclaredValue } from '../modules/MyUtil.js';
 import { requestFrame, timer, restartCSSAnimation } from '../modules/CSSAnimationUtil.js';
 
 PROTO_CARD.classList.add('draggable'); //set the dragging parent to outer-card
