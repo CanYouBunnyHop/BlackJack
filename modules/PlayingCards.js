@@ -3,6 +3,7 @@ const PROTO_CARD_CONTAINER = document.createElement('div');
 PROTO_CARD_CONTAINER.innerHTML = `
 <div class="outer-card" lock="false">
     <div class="inner-card flippable">
+        <div class="card-overlay"></div>
         <div class="front-face">
             <span class="rank" CORNER="TOP">A</span>
             <span class="suit" CORNER="TOP"></span>
@@ -17,6 +18,7 @@ PROTO_CARD_CONTAINER.innerHTML = `
         <div class="back-face">
             <span class="card-back-display">CARD</span>
         </div>
+        
     </div>
 </div>`;
 export const PROTO_CARD = PROTO_CARD_CONTAINER.firstElementChild; //GET THE PROTOTYPE ELEMENT
@@ -68,7 +70,7 @@ export class Card {
             case 'J': case 'Q': case 'K': appendSuits(2,0,2); hideSuit(leftCol, 1); hideSuit(rightCol, 0); break;
         }
         //\u2491 = 10
-        [...clone.querySelectorAll('.rank')].forEach(element=>{element.innerHTML = this.rank==='10'? '⒑': this.rank;}); 
+        [...clone.querySelectorAll('.rank')].forEach(element=>{element.innerHTML = this.rank;}); //==='10'? '⒑': this.rank;
         [...clone.querySelectorAll('.suit')].forEach(element=>{element.innerHTML = this.suit;});
         clone.style.color = ['♥','♦'].includes(this.suit) ? 'crimson' : 'black';
         return clone;

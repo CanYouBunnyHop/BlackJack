@@ -14,8 +14,8 @@ const __CARD_SCALE = getCSSDeclaredValue(GAME,'--card-scale', true);
 const __ANIM_MOVE_TIME = getCSSDeclaredValue(GAME, '--anim-move-time', true);
 const __CARD_HEIGHT = getCSSDeclaredValue(GAME, '--card-height', true);
 const __CARD_CASCADE_GAP = getCSSDeclaredValue(GAME,'--card-cascade-gap', true);
-const __SLOT_BORDER_SIZE = getCSSDeclaredValue(GAME,'--slot-border-size', true);
-const borderOffset = new Vector2(__SLOT_BORDER_SIZE, __SLOT_BORDER_SIZE);
+//const __SLOT_BORDER_SIZE = getCSSDeclaredValue(GAME,'--slot-border-size', true);
+//const borderOffset = Vector2.zero;//new Vector2(__SLOT_BORDER_SIZE, __SLOT_BORDER_SIZE);
 
 const MOVE_MANAGER = new Caretaker();
 const SOLITAIRE_DECK = createSolitaireDeck();
@@ -133,12 +133,18 @@ function createCard(_suit, _rank){
 
 //#region Freecell Main
 //
-function resizeCard(){
+async function resizeCard(){
     //1536 is standard default window size on desktop
     let gameWidth = getCSSDeclaredValue(GAME, 'width', true);
     let ratio = (gameWidth/ 1536)*__CARD_SCALE; 
-    console.log(__CARD_SCALE);
+    //console.log(__CARD_SCALE);
     GAME.style.setProperty('--card-scale', ratio);
+    await requestFrame();
+    let cardHeight = getCSSDeclaredValue(GAME, '--card-height', true);
+    let casGap = getCSSDeclaredValue(GAME,'--card-cascade-gap', true);
+    let totalHeight =  (cardHeight + casGap)*33; //22 is maximum possible longest cascade
+    GAME.style.height = `${totalHeight}px`; //resize game height to tallest possible, avoid resizing
+    console.log(totalHeight);
 }
 window.onresize = ()=>{resizeCard();}
 window.onload =()=>{
@@ -154,10 +160,7 @@ window.onload =()=>{
     document.ontouchmove = touchToMouseEvent;
     document.ontouchend = touchToMouseEvent;
 
-    let _curHeight = getCSSDeclaredValue(GAME, 'height', true);
-
-    let totalHeight = _curHeight + (__CARD_HEIGHT + __CARD_CASCADE_GAP)*22;
-    GAME.style.height = `${totalHeight}px`; //resize game height to tallest possible, avoid resizing
+   
 };
 //Undo button 
 window.undoButton = ()=>{
@@ -229,10 +232,10 @@ async function winCondition(){
             let validCard = document.getElementById(validId);
             //if no validcard or valid card is not tail, continue to next foundation
             if(validCard === null || validCard._next_ !== null) continue;
-            let mrect = foundation.getBoundingClientRect();
-            let movePos = new Vector2(mrect.x, mrect.y).add(borderOffset);
+            //let mrect = foundation.getBoundingClientRect();
+            //let movePos = new Vector2(mrect.x, mrect.y);
             await requestFrame(); //delayed fixed animation, idk why
-            await moveCardWithTransition(validCard, movePos, tail);
+            await moveCardWithTransition(validCard, tail);
             everyCardLeft--;
         }
     }
@@ -269,14 +272,11 @@ function solitaireStartDrag(mdownEvent){
     
     let dTarget = mdownEvent.target.closest('.draggable');
     document.getElementById('debug').innerHTML += dTarget.id;
-
     let dragCount = getInnerCount(dTarget);
-    let allowedDragCount = getAllowedDragCount();
-    let allowDrag = isValidCascade(dTarget) && dragCount <= allowedDragCount;
+    let allowDrag = isValidCascade(dTarget) && dragCount <= getAllowedDragCount();
     startDrag(mdownEvent, GAME, __ANIM_MOVE_TIME, afterStartDrag , releaseDrag, endTransition, allowDrag);
 }
 async function afterStartDrag(_startOut) {
-    //const {DRAG_TARGET} = _startOut;
     return {..._startOut};
 }
 async function releaseDrag(b4ReleaseOut){
@@ -312,29 +312,35 @@ async function releaseDrag(b4ReleaseOut){
     const NEW_DESTINATION_SLOT = IS_VALID_MOVE ? dest : DRAG_START.SLOT;
     //save start position if move is valid and is not same slot
     if(IS_VALID_MOVE && !IS_SAME_SLOT)
-        MOVE_MANAGER.remember(new Memento(DRAG_TARGET, DRAG_START.POS, DRAG_START.SLOT));
-    //cascade, card-container, cell, foundation
-    const IS_DEST_CARD_CON = NEW_DESTINATION_SLOT.classList.contains('card-container');
-    const DESTINATION_SLOT_TYPE = NEW_DESTINATION_SLOT._ancestorType_;
+        MOVE_MANAGER.remember(new Memento(DRAG_TARGET, DRAG_START.SLOT));
     
-    const MOVE_OFFSET = (()=>{//Immediate invoke
-        switch(DESTINATION_SLOT_TYPE){
-            case 'cell': return borderOffset;
-            case 'foundation': return IS_DEST_CARD_CON ? Vector2.zero : borderOffset;
-            case 'cascade': 
-                let _cascadeOffset = __CARD_HEIGHT + __CARD_CASCADE_GAP;
-                return IS_DEST_CARD_CON? new Vector2(0, _cascadeOffset+4): borderOffset;//magic number 4
-            default: return Vector2.zero;
-    }})();////Immediate invoke ends
-    let _destRect = NEW_DESTINATION_SLOT.getBoundingClientRect();
-    const MOVE_POS = new Vector2(_destRect.x, _destRect.y).add(MOVE_OFFSET); 
-    moveCardWithTransition(DRAG_TARGET, MOVE_POS, NEW_DESTINATION_SLOT);
+    // //create a temp div to get accurate position on
+    // const TEMP_TARGET = document.createElement('div');
+    // //add class to apply cascade offset in css
+    // TEMP_TARGET.classList.add('card-container');
+    // NEW_DESTINATION_SLOT.appendChild(TEMP_TARGET);
+    // let _destRect = TEMP_TARGET.getBoundingClientRect();
+    // const MOVE_POS = new Vector2(_destRect.x, _destRect.y);
+    // requestFrame(()=>TEMP_TARGET.remove());
+
+    moveCardWithTransition(DRAG_TARGET, NEW_DESTINATION_SLOT);
+
     const START_CAS_ANCESTOR = DRAG_START.SLOT.closest('.cascade.slot.ancestor');
     const DEST_CAS_ANCESTOR = NEW_DESTINATION_SLOT.closest('.cascade.slot.ancestor');
     return {...b4ReleaseOut, NEW_DESTINATION_SLOT, START_CAS_ANCESTOR, DEST_CAS_ANCESTOR}
 }
 //NOTE: can move to draggable module
-async function moveCardWithTransition(_card, _movePosition, _destSlot){ 
+async function moveCardWithTransition(_card, _destSlot){
+    //create a temp div to get accurate position on
+    const TEMP_TARGET = document.createElement('div');
+    //add class to apply cascade offset in css
+    TEMP_TARGET.classList.add('card-container');
+    _destSlot.appendChild(TEMP_TARGET);
+    let _destRect = TEMP_TARGET.getBoundingClientRect();
+    const MOVE_POS = new Vector2(_destRect.x, _destRect.y);
+    requestFrame(()=>TEMP_TARGET.remove());
+
+
     let startRect =  _card.getBoundingClientRect();
     let startPos = new Vector2(startRect.x, startRect.y);
     _card.style.position = 'fixed';
@@ -342,8 +348,8 @@ async function moveCardWithTransition(_card, _movePosition, _destSlot){
     _card.style.top = `${startPos.y}px`;
     GAME.appendChild(_card);
     requestFrame(()=>{
-        _card.style.left = `${_movePosition.x}px`;
-        _card.style.top = `${_movePosition.y}px`;
+        _card.style.left = `${MOVE_POS.x}px`;
+        _card.style.top = `${MOVE_POS.y}px`;
     });
     await timer(__ANIM_MOVE_TIME);
     _card.style.position = 'relative';

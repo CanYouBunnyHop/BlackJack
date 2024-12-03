@@ -6,6 +6,7 @@ export function slotLogic(event, unhoverEvent='mouseleave'){
     let capacity = slot.getAttribute('capacity') ?? Infinity;
     if(slot.children.length >= capacity) return;
     slot.classList.add('active-slot');
+    if(document.querySelectorAll('.active-slot').forEach(el=>{if(el!==slot)el.classList.remove('active-slot')}));
     slot.addEventListener(unhoverEvent, async _event=>{
         await requestFrame(()=>{},2); 
         slot.classList.remove('active-slot');
@@ -42,20 +43,14 @@ export async function startDrag(mdownEvent, targetParentElement, animationTime =
         onDrag(mdownEvent, START_OUT);
         const DRAGGING_REF = (moveEvent) => onDrag(moveEvent, START_OUT);
         //when mouse is moving and when scrolling
-
         document.addEventListener('mousemove', DRAGGING_REF);
-        //document.addEventListener('touchmove', DRAGGING_REF);
-
         //ReleaseDrag
         const ON_MOUSE_UP_REF = onMouseUp;
         document.addEventListener('mouseup', ON_MOUSE_UP_REF);
-        //document.addEventListener('touchend', ON_MOUSE_UP_REF);
         async function onMouseUp(releaseEvent){
             document.removeEventListener('mouseup', ON_MOUSE_UP_REF);
-            //document.removeEventListener('touchend', ON_MOUSE_UP_REF);
             document.body.setAttribute('drag-active', false);
             document.removeEventListener('mousemove', DRAGGING_REF);
-            //document.removeEventListener('touchmove', DRAGGING_REF);
             DRAG_TARGET.style.transition = INITIAL_TRANSITION;
             requestFrame(()=>DRAG_TARGET.classList.remove('dragging'));
             const B4RELEASE_OUT = await beforeReleaseDrag(releaseEvent, START_OUT);
@@ -113,9 +108,9 @@ export function touchToMouseEvent(event) {
     var touch = event.changedTouches[0];
     var type = "";
     switch (event.type) {
-        case "touchstart":type ="mousedown";break;
-        case "touchmove":type="mousemove";break;
-        case "touchend":type="mouseup";break;
+        case "touchstart":type ="mousedown"; break;
+        case "touchmove":type="mousemove"; break;
+        case "touchend":type="mouseup"; break;
         default: return;
     }
     var simulatedEvent = new MouseEvent(type, {
