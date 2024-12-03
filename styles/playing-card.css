@@ -16,7 +16,7 @@
         --card-width : calc(25px * var(--card-scale));
         --card-height : calc(35px * var(--card-scale));
 
-        --suit-middle-size : calc(0.4rem * var(--card-scale));
+        --suit-middle-size : calc(0.37rem * var(--card-scale));
         --suit-corner-size : calc(0.2rem * var(--card-scale));
         --rank-size: calc(.27rem * var(--card-scale)); /*Time = .3rem */
 
@@ -95,14 +95,24 @@
         display: block;
         margin: auto;
     }
-    /* .column[POS='MIDDLE']{outline: rgb(0, 238, 255) solid 1px;} 
-    .column[POS='LEFT']{outline: red solid 1px;} */
+    /* [CORNER='BOT']{outline: rgb(0, 255, 17) solid 1px;}
+    [CORNER='TOP']{outline: rgb(255, 0, 51) solid 1px;}
+    .column{outline: rgb(0, 238, 255) solid 1px;}   */
+    /* .column[POS='LEFT']{outline: red solid 1px;} */
     /*#game .inner-card .suit{outline: rgb(40, 106, 9) solid 1.1px;} */
-    #game .card-front-display .column[POS='MIDDLE']{margin-left: -22%; margin-right: -22%;}
+    #game .card-front-display .column[POS='MIDDLE']{margin-left: -25%; margin-right: -25%;}
 
-    #game .card-front-display .column[POS='MIDDLE'] :first-child{padding-top: 0.5em;}
-    #game .card-front-display .column[POS='MIDDLE'] :last-child{padding-top: 0.5em;}
-    #game .card-front-display .column[POS='MIDDLE'] :only-child{padding:  0em !important;}
+    [rank='7'] .card-front-display .column[POS='MIDDLE'] :first-child{margin-top: 0.77em !important;}
+    [rank='10'] .card-front-display .column[POS='MIDDLE'] :first-child{margin-top: 0.5em !important;}
+    [rank='10'] .card-front-display .column[POS='MIDDLE'] :last-child{margin-bottom: 0.5em !important;}
+    [rank='8'] .card-front-display .column[POS='MIDDLE'] :first-child{margin-top: 0.77em !important;}
+    [rank='8'] .card-front-display .column[POS='MIDDLE'] :last-child{margin-bottom: 0.77em !important;}
+    [rank='3'] .card-front-display .column[POS='MIDDLE'] :first-child{margin-top: 0.1em !important;}
+    [rank='3'] .card-front-display .column[POS='MIDDLE'] :last-child{margin-bottom: 0.1em !important;}
+
+    #game .card-front-display .column[POS='MIDDLE'] :first-child{margin-top: 0.5em;}
+    #game .card-front-display .column[POS='MIDDLE'] :last-child{margin-bottom: 0.5em;}
+    #game .card-front-display .column[POS='MIDDLE'] :only-child{margin:0em !important;}
     
     #game .card-front-display .column:not([POS='MIDDLE']) :first-child{margin-top: -25% !important; /*margin-bottom: -0.1em;*/}
     #game .card-front-display .column:not([POS='MIDDLE']) :last-child{margin-bottom: -25% !important; /*margin-top: -0.1em;*/}

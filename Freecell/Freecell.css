@@ -10,7 +10,7 @@
 #game{
     width: 100vw; touch-action: pan-y; /*prevents touch from scrolling on x-axis*/
     --card-scale : 3; /*mobile use 5.7*/
-    --card-cascade-gap : calc(-28px * var(--card-scale));
+    --card-cascade-gap : calc(-30px * var(--card-scale));
     --anim-time-scale : 0.3;
     --anim-move-time : calc(1s * var(--anim-time-scale));
     --anim-move-initial-transition : left var(--anim-move-time), top var(--anim-move-time);
@@ -51,14 +51,14 @@
 }
 #game .cascade.slot{margin-left: 1%; margin-right: 1%;}
 
-/* .card-container{width: var(--card-width); height: var(--card-height); border: 0px;padding: 0px;}  */
+.card-container{border: 0px;padding: 0px;}
 
 #game .card-container[ancestor-type="cascade"] .card-container{ /*when card-container is within a card-container*/
-    margin-top: var(--card-cascade-gap);
+    margin-top: calc(var(--card-cascade-gap)); /*-4px*/
 }
 #game .card-container[ancestor-type="foundation"] .card-container{
-    --mtop : calc(-1 * var(--card-height));
-    margin-top: calc(var(--mtop) + -4px);
+    /* --mtop : calc(-4 * var(--card-height));
+    margin-top: calc(var(--mtop) + -4px); */
 }
 #game .active-slot, .active-slot .card-overlay, .dragging .card-overlay{
     animation: selection 0.3s forwards;
