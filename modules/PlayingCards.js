@@ -69,7 +69,6 @@ export class Card {
             case '10':appendSuits(4,3,4); hideSuit(midCol,1); break;
             case 'J': case 'Q': case 'K': appendSuits(2,0,2); hideSuit(leftCol, 1); hideSuit(rightCol, 0); break;
         }
-        //\u2491 = 10
         [...clone.querySelectorAll('.rank')].forEach(element=>{element.innerHTML = this.rank;}); //==='10'? '⒑': this.rank;
         [...clone.querySelectorAll('.suit')].forEach(element=>{element.innerHTML = this.suit;});
         clone.style.color = ['♥','♦'].includes(this.suit) ? 'crimson' : 'black';
@@ -92,10 +91,9 @@ export function resetCardGame(){
     let cards = document.querySelectorAll('.outer-card:not(.prototype)');
     cards.forEach(card=>{card.remove()})
 }
-
 //calculation for solitaire
 export function getSuitColor(_suit){
-    // ♠♣♥♦ 
+    // ♠♣♥♦
     switch(_suit){
         case '♠': case '♣': return 'black';
         case '♥': case'♦': return 'red';
@@ -126,4 +124,4 @@ export function getNeigbourRanks(_rank, _isLooping = false){
         rankDown : CARD_DATA.ranks[downIndex],
         rankUp : CARD_DATA.ranks[upIndex],
     }
-}
+} 

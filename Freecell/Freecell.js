@@ -1,6 +1,7 @@
 import Vector2 from "../modules/Vector2.js";
 import { Card, getSuitColor, getNeigbourRanks, CARD_DATA } from "../modules/PlayingCards.js";
-import { setAllElementWithLogic, popRandomFromArr, getCSSDeclaredValue} from "../modules/MyUtil.js";
+import { setAllElementWithLogic, popRandomFromArr} from "../modules/MyUtil.js";
+import { getCSSDeclaredValue } from "../modules/CSSUtil.js";
 import { requestFrame, timer } from "../modules/CSSAnimationUtil.js";
 import { startDrag, slotLogic, touchToMouseEvent} from "../modules/MyDraggables.js";
 import { Memento, Caretaker } from "../modules/UndoPattern.js";
@@ -12,8 +13,8 @@ PROTO_CARD_CONTAINER.classList.add('card-container', 'draggable', 'slot'); //set
 //CSS
 const __CARD_SCALE = getCSSDeclaredValue(GAME,'--card-scale', true);
 const __ANIM_MOVE_TIME = getCSSDeclaredValue(GAME, '--anim-move-time', true);
-const __CARD_HEIGHT = getCSSDeclaredValue(GAME, '--card-height', true);
-const __CARD_CASCADE_GAP = getCSSDeclaredValue(GAME,'--card-cascade-gap', true);
+//const __CARD_HEIGHT = getCSSDeclaredValue(GAME, '--card-height', true);
+//const __CARD_CASCADE_GAP = getCSSDeclaredValue(GAME,'--card-cascade-gap', true);
 //const __SLOT_BORDER_SIZE = getCSSDeclaredValue(GAME,'--slot-border-size', true);
 //const borderOffset = Vector2.zero;//new Vector2(__SLOT_BORDER_SIZE, __SLOT_BORDER_SIZE);
 
@@ -137,7 +138,6 @@ async function resizeCard(){
     //1536 is standard default window size on desktop
     let gameWidth = getCSSDeclaredValue(GAME, 'width', true);
     let ratio = (gameWidth/ 1536)*__CARD_SCALE; 
-    //console.log(__CARD_SCALE);
     GAME.style.setProperty('--card-scale', ratio);
     await requestFrame();
     let cardHeight = getCSSDeclaredValue(GAME, '--card-height', true);
@@ -149,9 +149,10 @@ async function resizeCard(){
 window.onresize = ()=>{resizeCard();}
 window.onload =()=>{
     resizeCard();
-    dealCards();
+    //dealCards();
     //debugDeal();
     //debugDealLong();
+    debugDealFoundation();
     //It probably will never happen but it's possible starting deal is also winning deal
     FOUNDATIONS.forEach(el=>el._rankUp_='A'); //foundations only take Aces at the beginning
     setAllElementWithLogic('.slot', 'pointerenter', (ev)=>slotLogic(ev, 'pointerleave'));
@@ -159,8 +160,6 @@ window.onload =()=>{
     setAllElementWithLogic('.draggable', 'touchstart', touchToMouseEvent);
     document.ontouchmove = touchToMouseEvent;
     document.ontouchend = touchToMouseEvent;
-
-   
 };
 //Undo button 
 window.undoButton = ()=>{
@@ -202,6 +201,14 @@ function debugDealLong(){
         '♠K','♥Q','♠J','♥10','♠9','♥8','♥K','♠Q','♥J','♠10','♥9','♠8',
         '♥7','♠6','♥5','♠4','♥3','♠2','♥A'
     );
+}
+//♠♣♥♦
+function debugDealFoundation(){
+    let cascades = [...CASCADES];
+    dealCardWithID(cascades[0],'♠K','♠Q','♠J','♠10','♠9','♠8','♠7','♠6','♠5','♠4','♠3','♠2','♠A');
+    dealCardWithID(cascades[1],'♥K','♥Q','♥J','♥10','♥9','♥8','♥7','♥6','♥5','♥4','♥3','♥2','♥A');
+    dealCardWithID(cascades[2],'♣K','♣Q','♣J','♣10','♣9','♣8','♣7','♣6','♣5','♣4','♣3','♣2','♣A');
+    dealCardWithID(cascades[3],'♦K','♦Q','♦J','♦10','♦9','♦8','♦7','♦6','♦5','♦4','♦3','♦2','♦A');
 }
 function dealCards(){
     let cascadeEnds = [...CASCADES];
@@ -338,8 +345,7 @@ async function moveCardWithTransition(_card, _destSlot){
     _destSlot.appendChild(TEMP_TARGET);
     let _destRect = TEMP_TARGET.getBoundingClientRect();
     const MOVE_POS = new Vector2(_destRect.x, _destRect.y);
-    requestFrame(()=>TEMP_TARGET.remove());
-
+    TEMP_TARGET.remove();
 
     let startRect =  _card.getBoundingClientRect();
     let startPos = new Vector2(startRect.x, startRect.y);

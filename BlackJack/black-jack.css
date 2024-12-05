@@ -1,4 +1,5 @@
-#game .button-menu{top: 42%; position: fixed;left: 20%; width: 50%;}
+
+#game .button-menu{top: 40%; position: fixed;left: 20%; width: 50%;}
 #game .button-menu button{font-size: x-large; margin: 5%; margin-top: 0%; width: 100px;}
 #game #game-overlay{width: 100%; height: 100%; position: fixed; z-index: 3;
     display: grid;
@@ -27,12 +28,13 @@
 #game .deck{width:var(--card-width); height: var(--card-height);
     top: calc(50% - var(--card-height)/2); right: 2%; position: fixed;
 }
-#game{
+@media (max-width: 600px) { #game{--card-scale : 3.3;} } /*for mobile screen size*/
+#game{touch-action:none; /*disable panning*/
     --start-slot-width: 20%;
     --overlay-fade-time : 4s;
-    --hand-card-offset : calc(-20px * var(--card-scale));
-    --anim-select-dist : calc(-5px * var(--card-scale));
-    --anim-insert-dist : calc(-10px * var(--card-scale));
+    --hand-card-offset : calc(-2rem * var(--card-scale));
+    --anim-select-dist : calc(-0.8rem * var(--card-scale));
+    --anim-insert-dist : calc(1rem * var(--card-scale));
     --anim-select-time : calc(.3s * var(--anim-time-scale));
     --anim-move-time : calc(1s * var(--anim-time-scale));
     --anim-select-transition : margin-top var(--anim-select-time);
@@ -57,16 +59,18 @@
 #game .dragging .inner-card{ /*Flipping Animation and Select Animation*/
     transform: rotateY(180deg);
     transition: var(--anim-flippable-transition), margin-top 0s;
-    margin-top: var(--anim-select-dist) !important;
+    margin-top: var(--anim-select-dist);
 }
 
-body[drag-active='true'] #player-hand .outer-card:hover{/* INSERTION ANIM dont play if the slot is locked*/ 
-    margin-right: var(--anim-insert-dist) !important;
-} 
+/* INSERTION ANIM dont play if the slot is locked*/
+body[drag-active='true'] #player-hand .outer-card.hover+.outer-card:not(.temp){ 
+    margin-left: var(--anim-insert-dist) !important;
+}
+ 
 #game .hand .outer-card{margin-right: var(--hand-card-offset);}/*CARD IN HAND EFFECT*/
-#game .hand .outer-card:not(.dragging, .disable-hover-anim):hover{transition: var(--anim-move-initial-transition);}
-
 #game .inner-card{transition: var(--anim-flippable-transition), var(--anim-select-transition);}
-#game #player-hand .outer-card:not(.disable-hover-anim):hover .inner-card{/*MOUSE HOVER, DO SELECT ANIMATION*/
-    margin-top: var(--anim-select-dist) !important;
+#player-hand .outer-card.hover:not(.disable-hover-anim) .inner-card{/*MOUSE HOVER, DO SELECT ANIMATION*/
+    margin-top: var(--anim-select-dist);
 }
+/*fixes IOS Safari where the left card is rendered in front*/
+#dealer-hand .outer-card+.outer-card{transform: translateZ(1rem);}

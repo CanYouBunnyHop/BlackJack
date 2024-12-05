@@ -1,15 +1,12 @@
-//
-//PLAYING CARD GAMES SHARED LOGIC
-//
 import { currentDeck, resetCardGame, PROTO_CARD } from '../modules/PlayingCards.js';
 import { BaseState, BaseStateMachine } from '../modules/StateMachinePattern.js';
 import Vector2 from '../modules/Vector2.js';
-import { slotLogic, startDrag } from '../modules/MyDraggables.js';
-import { setAllElementWithLogic, popRandomFromArr, getCSSDeclaredValue } from '../modules/MyUtil.js';
+import { slotLogic, startDrag, touchToMouseEvent, hoveredLogic } from '../modules/MyDraggables.js';
+import { setAllElementWithLogic, popRandomFromArr} from '../modules/MyUtil.js';
+import { getCSSDeclaredValue, remToPx} from '../modules/CSSUtil.js';
 import { requestFrame, timer, restartCSSAnimation } from '../modules/CSSAnimationUtil.js';
 
 PROTO_CARD.classList.add('draggable'); //set the dragging parent to outer-card
-
 const GAME = document.getElementById('game');
 const GAME_OVERLAY =  GAME.querySelector('#game-overlay');
 const GAME_OVERLAY_MSG = GAME_OVERLAY.querySelector('#game-overlay-msg');
@@ -22,33 +19,34 @@ const __OVERLAY_FADE_TIME = getCSSDeclaredValue(GAME, '--overlay-fade-time', tru
 const __ANIM_MOVE_INITIAL_TRANSITION = getCSSDeclaredValue(GAME, '--anim-move-initial-transition', false);
 const HAND_CARD_WIDTH = __CARD_WIDTH + __HAND_CARD_OFFSET;
 //
-// DRAGGABLE RELATED LOGICS
+//#region DRAGGABLE RELATED LOGICS
 //
 function blackJackStartDrag(mdownEvent){ //Wrapper to add statemachine state
     if(GAME_STATE_MACHINE.currentState === GAME_STATE.playersTurn)
         startDrag(mdownEvent, GAME, __ANIM_MOVE_TIME, afterStartDrag, releaseDragInHand, dragEndTransition);
 }
-async function afterStartDrag(startOut) {
+async function afterStartDrag(startOut){
     const {DRAG_START} = startOut;
     if(DRAG_START.NEIGHBOUR.R){//If start sibR exist, apply hand-card width Margin Offset
         DRAG_START.NEIGHBOUR.R.style.transition = 'margin 0s';
         await requestFrame(()=>{
-            DRAG_START.NEIGHBOUR.R.style.marginLeft = `${HAND_CARD_WIDTH}px`;
+            DRAG_START.NEIGHBOUR.R.style.marginLeft = `${HAND_CARD_WIDTH}rem`;
         });
         await requestFrame(()=>{
             DRAG_START.NEIGHBOUR.R.style.transition = `${__ANIM_MOVE_INITIAL_TRANSITION}`;
-        })
+        });
     };
     return {...startOut};
 }
 async function releaseDragInHand(b4ReleaseOut){
     const { DRAG_TARGET, DRAG_START, IS_SAME_SLOT, DRAG_RELEASE } = b4ReleaseOut;
+    const {HOVERED_SIB, DESTINATION_SLOT} = DRAG_RELEASE;
     const RELEASE_STATE = {NONE: "None", LEFT_MOST: "L", MIDDLE: "M", RIGHT_MOST: "R"};
     let _lastChildRect = DRAG_RELEASE.LAST_CHILD.getBoundingClientRect();
     let releaseState = (()=>{ //Immediate Invoke, get releaseState
         let _isMouseRight = DRAG_RELEASE.MPOS.x > _lastChildRect.left;
-        let _isHovSibFirst= DRAG_RELEASE.HOVERED_SIB?DRAG_RELEASE.HOVERED_SIB===DRAG_RELEASE.FIRST_CHILD: false;
-        let _isHovSibLast = DRAG_RELEASE.HOVERED_SIB?DRAG_RELEASE.HOVERED_SIB===DRAG_RELEASE.LAST_CHILD : false;
+        let _isHovSibFirst= HOVERED_SIB? HOVERED_SIB===DRAG_RELEASE.FIRST_CHILD: false;
+        let _isHovSibLast = HOVERED_SIB? HOVERED_SIB===DRAG_RELEASE.LAST_CHILD : false;
         if((_isMouseRight || _isHovSibLast) && DRAG_RELEASE.ACTIVE_SLOT)
             return RELEASE_STATE.RIGHT_MOST;
         if(IS_SAME_SLOT && ! DRAG_RELEASE.HOVERED_SIB)
@@ -61,7 +59,7 @@ async function releaseDragInHand(b4ReleaseOut){
     const DRAG_END = (()=>{ switch (releaseState){ //Immediate Invoke
         case RELEASE_STATE.NONE:
             return {
-                POS : DRAG_START.POS,
+                //POS : DRAG_START.POS,
                 NEIGHBOUR : {
                     L : [...DRAG_START.SLOT.children][DRAG_START.INDEX-1],
                     R : [...DRAG_START.SLOT.children][DRAG_START.INDEX],
@@ -70,7 +68,7 @@ async function releaseDragInHand(b4ReleaseOut){
         case RELEASE_STATE.LEFT_MOST:
             var targetRect = DRAG_RELEASE.FIRST_CHILD.getBoundingClientRect();
             return {
-                POS : new Vector2(targetRect.right + 3, DRAG_RELEASE.DESTINATION_SLOT.getBoundingClientRect().top),
+                //POS : new Vector2(targetRect.right + 3, DESTINATION_SLOT.getBoundingClientRect().top),
                 NEIGHBOUR : {
                     L : DRAG_RELEASE.FIRST_CHILD,
                     R : DRAG_RELEASE.FIRST_CHILD.nextElementSibling,
@@ -79,7 +77,7 @@ async function releaseDragInHand(b4ReleaseOut){
         case RELEASE_STATE.MIDDLE:
             var targetRect = DRAG_RELEASE.HOVERED_SIB.getBoundingClientRect();
             return {
-                POS : new Vector2(targetRect.left + HAND_CARD_WIDTH, DRAG_RELEASE.DESTINATION_SLOT.getBoundingClientRect().top),
+                //POS : new Vector2(targetRect.left + HAND_CARD_WIDTH, DESTINATION_SLOT.getBoundingClientRect().top),
                 NEIGHBOUR : {
                     L : DRAG_RELEASE.HOVERED_SIB,
                     R : DRAG_RELEASE.HOVERED_SIB.nextElementSibling,
@@ -90,9 +88,9 @@ async function releaseDragInHand(b4ReleaseOut){
             let _isLastAlsoFirst = DRAG_RELEASE.FIRST_CHILD === DRAG_RELEASE.LAST_CHILD;
             return {
                 //if right most is also left most, use left most position
-                POS : new Vector2(
-                    _isLastAlsoFirst? targetRect.right + 3 : targetRect.left + HAND_CARD_WIDTH, 
-                    DRAG_RELEASE.DESTINATION_SLOT.getBoundingClientRect().top),
+                // POS : new Vector2(
+                //     _isLastAlsoFirst? targetRect.right + 3 : targetRect.left + HAND_CARD_WIDTH, 
+                //     DESTINATION_SLOT.getBoundingClientRect().top),
                 NEIGHBOUR : {
                     L : DRAG_RELEASE.LAST_CHILD,
                     R : DRAG_RELEASE.LAST_CHILD.nextElementSibling,
@@ -101,27 +99,37 @@ async function releaseDragInHand(b4ReleaseOut){
         };})(); //Immediate Invoke ENDS
     //Apply hand card offset if left sibling is a card, aka not first child
     if(DRAG_END.NEIGHBOUR.L && DRAG_END.NEIGHBOUR.L !== DRAG_RELEASE.FIRST_CHILD) 
-        DRAG_END.NEIGHBOUR.L.marginRight = `${__HAND_CARD_OFFSET}px`;
+        DRAG_END.NEIGHBOUR.L.marginRight = `${__HAND_CARD_OFFSET}rem`;
 
     //Make space to card on the right, for insertion
-    if(DRAG_END.NEIGHBOUR.R) DRAG_END.NEIGHBOUR.R.style.marginLeft = `${HAND_CARD_WIDTH}px`;
+    if(DRAG_END.NEIGHBOUR.R) DRAG_END.NEIGHBOUR.R.style.marginLeft = `${HAND_CARD_WIDTH}rem`;
 
     //if target position's right sib is not the same as starting position's right sib, reset margin left
     if(DRAG_START.NEIGHBOUR.R && DRAG_START.NEIGHBOUR.R !== DRAG_END.NEIGHBOUR.R){
         DRAG_START.NEIGHBOUR.R.style.transition = `${__ANIM_MOVE_INITIAL_TRANSITION}`;
-        requestFrame(()=>{DRAG_START.NEIGHBOUR.R.style.marginLeft = '0px';})
+        requestFrame(()=>{DRAG_START.NEIGHBOUR.R.style.marginLeft = '0rem';})
     }
 
-     //Additional position offset applied if starting slot and target slot is the same
-     let _destSibLIndex = [...DRAG_RELEASE.DESTINATION_SLOT.children].indexOf(DRAG_END.NEIGHBOUR.L);
-     let sameSlotOffset = (()=>{//Immediate Invoke
+    //Additional position offset applied if starting slot and target slot is the same
+    let _destSibLIndex = [...DESTINATION_SLOT.children].indexOf(DRAG_END.NEIGHBOUR.L);
+    let sameSlotOffset = (()=>{//Immediate Invoke
          if(IS_SAME_SLOT && _destSibLIndex >= DRAG_START.INDEX) //
-             return DRAG_START.INDEX===1 ? - __ANIM_INSERT_DIST - HAND_CARD_WIDTH : HAND_CARD_WIDTH;
+             return DRAG_START.INDEX===1 ? __ANIM_INSERT_DIST - HAND_CARD_WIDTH : HAND_CARD_WIDTH;
          return 0;
     })();//Immediate Invoke ends
+
+    //create temp slot
+    let tempSlot = document.createElement('div');
+    tempSlot.classList.add('outer-card', 'temp');
+    DESTINATION_SLOT.insertBefore(tempSlot, DRAG_END.NEIGHBOUR.R);
+    let trect = tempSlot.getBoundingClientRect();
+    let movePos = new Vector2(trect.x, trect.y);
+    tempSlot.remove();
+    
     //move to position
-    DRAG_TARGET.style.left =`${DRAG_END.POS.x - sameSlotOffset}px`;
-    DRAG_TARGET.style.top = `${DRAG_END.POS.y}px`;
+    DRAG_TARGET.style.left = `${movePos.x - remToPx(sameSlotOffset)}px`;
+    DRAG_TARGET.style.top = `${movePos.y}px`;
+
     return {
         ...b4ReleaseOut, 
         DRAG_END 
@@ -129,6 +137,7 @@ async function releaseDragInHand(b4ReleaseOut){
 }
 async function dragEndTransition(releaseOut){
     const {DRAG_END, DRAG_TARGET, DRAG_RELEASE} = releaseOut;
+    
     //reset sibling margins
     [DRAG_END.NEIGHBOUR.L, DRAG_END.NEIGHBOUR.R].forEach(nbour=>{if(nbour){
         nbour.style.transition = 'margin 0s';
@@ -136,42 +145,51 @@ async function dragEndTransition(releaseOut){
         //delay frame is 2 because alr requested frame once, add one more to run consistently; 
         requestFrame(()=>{nbour.style.transition = __ANIM_MOVE_INITIAL_TRANSITION}, 2)
     }});
+
     await requestFrame(()=>{
         DRAG_TARGET.style.position = 'relative';
         DRAG_TARGET.style.left = '0px'; 
         DRAG_TARGET.style.top = '0px';
         DRAG_RELEASE.DESTINATION_SLOT.insertBefore(DRAG_TARGET, DRAG_END.NEIGHBOUR.R);
     }); 
+
     await requestFrame(()=>{
         DRAG_TARGET.style.transition = `${__ANIM_MOVE_INITIAL_TRANSITION}`;
         DRAG_TARGET.classList.remove('disable-hover-anim');
         GAME_STATE_MACHINE.currentState = GAME_STATE.playersTurn;
     });
+    
 }
-function getCardsFromHand(hand){
-   return [...hand.children].slice(1, undefined);
-}
+//#endregion
 //
-//BLACK JACK RELATED GAME LOGIC
+//#region BLACK JACK RELATED GAME LOGIC
 //
 const PLAYER_HAND = GAME.querySelector('#player-hand');
 const DEALER_HAND = GAME.querySelector('#dealer-hand');
+function getCardsFromHand(hand){return [...hand.children].slice(1, undefined);}
 //WHEN PAGE FINISH LOADING //PROBABLY WANT TO USE DEFERED ON THE SCRIPT INSTEAD
 window.onload = ()=>{ 
-    setAllElementWithLogic('.slot', 'mouseenter', (ev)=>slotLogic(ev, 'mouseleave'));
+    setAllElementWithLogic('.slot', 'pointerenter', (ev)=>slotLogic(ev, 'pointerleave'));
+    document.ontouchmove = touchToMouseEvent;
+    document.ontouchend = touchToMouseEvent;
 }
-
 function popCardFromDeck(_targetHand, _deckSelector = '.deck:hover', flipOver=true, isDraggable=true){//TEST
     if(document.body.getAttribute('transitioning') === 'true') return;
     const _deckRect = GAME.querySelector(_deckSelector).getBoundingClientRect();
     const DECK_POS = new Vector2(_deckRect.left, _deckRect.top);
-    const _lastChildRect = _targetHand.lastElementChild.getBoundingClientRect();
-    const _isFirstLastSame = _targetHand.lastElementChild === _targetHand.firstElementChild;
-    const _xOffset = _isFirstLastSame ? _lastChildRect.width + 3  : HAND_CARD_WIDTH; //Magic number 3
-    const TARGET_POS = new Vector2(_lastChildRect.left + _xOffset, _lastChildRect.top);
+
+    //change target Pos to temp slot
+    const t = document.createElement('div'); t.classList.add('outer-card', 'temp');
+    _targetHand.appendChild(t); //to the last child
+    const _tempPos = t.getBoundingClientRect();
+    const TARGET_POS = new Vector2(_tempPos.x, _tempPos.y);
+    t.remove();
+
     const NEW_CARD = popRandomFromArr(currentDeck).createElement(); //create card element
     const INNER_CARD = NEW_CARD.querySelector('.flippable');
+
     GAME.appendChild(NEW_CARD);
+
     //Set starting pos, initial values
     document.body.setAttribute('transitioning', true);
     NEW_CARD.style.position = 'fixed';
@@ -188,15 +206,20 @@ function popCardFromDeck(_targetHand, _deckSelector = '.deck:hover', flipOver=tr
         NEW_CARD.style.left = `${0}px`; NEW_CARD.style.top = `${0}px`;
         INNER_CARD.style.transform = ''; //clear overridden flip transform
         _targetHand.appendChild(NEW_CARD);
-        if(isDraggable) NEW_CARD.addEventListener('mousedown', blackJackStartDrag)//setDraggableLogic(NEW_CARD); //Set draggable logic if isDraggable is set to true
+        if(isDraggable) {
+            NEW_CARD.addEventListener('mousedown', blackJackStartDrag);//Set draggable logic if isDraggable is set to true
+            NEW_CARD.addEventListener('touchstart', touchToMouseEvent);
+            NEW_CARD.addEventListener('pointerenter', hoveredLogic);
+        }
         document.body.setAttribute('transitioning', false);
     })})
 }
-//get buttons
+//#endregion
+//region BlackJack get buttons
 const HIT_BUT = GAME.querySelector('#hit-but');
 const STAND_BUT = GAME.querySelector('#stand-but');
 const DEAL_BUT = GAME.querySelector('#deal-but');
-
+//#region BlackJack StateMachine
 const GAME_STATE = { 
     deal : new BaseState(
         function enterDeal(){
@@ -236,7 +259,9 @@ const GAME_STATE = {
     )
 };
 const GAME_STATE_MACHINE = new BaseStateMachine(GAME_STATE.deal);
-
+//#endregion
+//
+//#region Button logic
 async function dealCardsToPlayer(){
     await popCardFromDeck(PLAYER_HAND,'#universal-deck', true, true);
     return popCardFromDeck(PLAYER_HAND,'#universal-deck', true, true);
@@ -245,19 +270,21 @@ async function dealCardsToDealer(){
     await popCardFromDeck(DEALER_HAND,'#universal-deck', true, false);
     return popCardFromDeck(DEALER_HAND,'#universal-deck', false, false);
 }
-//Assign functions to global scope, so html button can access
 window.dealButtonLogic = async ()=>{
+    if(DEAL_BUT.disabled)return;//some mobile browsers let touch ignore disabled
     await dealCardsToPlayer();
     await dealCardsToDealer();
     GAME_STATE_MACHINE.currentState = GAME_STATE.playersTurn;
 }
 window.hitPButtonLogic = async ()=>{
+    if(HIT_BUT.disabled)return;//some mobile browsers let touch ignore disabled
     await popCardFromDeck(PLAYER_HAND,'#universal-deck', true, true);
     //get player points, if over or equal to 21, go to dealer turn
     if(getBlackJackCardPoints(PLAYER_HAND) >= 21 ) 
         GAME_STATE_MACHINE.currentState = GAME_STATE.dealersTurn;
 }
 window.standButtonLogic = async ()=>{
+    if(STAND_BUT.disabled)return; //some mobile browsers let touch ignore disabled
     GAME_STATE_MACHINE.currentState = GAME_STATE.dealersTurn;
 }
 async function dealerAILogic(){
@@ -271,6 +298,7 @@ async function dealerAILogic(){
         })
     }
 }
+//#endregion
 async function endTurnLogic(){
     //await flip all dealer's cards
     document.body.setAttribute('transitioning', true); //disable drag
@@ -303,7 +331,7 @@ async function endTurnLogic(){
     //for now, need a better way to show this
     await timer(1);
     GAME_OVERLAY.style.visibility = 'visible';
-    GAME_OVERLAY_MSG.innerHTML = getGameOverMessage();
+    GAME_OVERLAY_MSG.innerText = getGameOverMessage();
     await restartCSSAnimation(GAME_OVERLAY);
     await timer(__OVERLAY_FADE_TIME);
     await resetCardGameWithTransition();
@@ -311,8 +339,7 @@ async function endTurnLogic(){
     document.body.setAttribute('transitioning', false); //enable drag for cards again
 }
 async function resetCardGameWithTransition(){
-    const cards = GAME.querySelectorAll('.outer-card:not(.prototype)');
-    //console.log([...cards].length);
+    const cards = GAME.querySelectorAll('.outer-card:not(.temp)');
     const deckRect = GAME.querySelector('#universal-deck').getBoundingClientRect();
     [...cards].forEach(card=>{
         let cardRect = card.getBoundingClientRect();
@@ -321,12 +348,12 @@ async function resetCardGameWithTransition(){
         }).then(()=>{return requestFrame(()=>{
             card.style.position = 'fixed'
             card.style.transition = 'left 0s, top 0s';
-            card.style.left = `${cardRect.left}px`;
-            card.style.top = `${cardRect.top}px`;
+            card.style.left = `${cardRect.x}px`;
+            card.style.top = `${cardRect.y}px`;
         })}).then(()=>{return requestFrame(()=>{//flip card over
-            card.style.transition = __ANIM_MOVE_INITIAL_TRANSITION; //__ANIM_MOVE_INITIAL_TRANSITION
-            card.style.left = `${deckRect.left}px`;
-            card.style.top = `${deckRect.top}px`;
+            card.style.transition = __ANIM_MOVE_INITIAL_TRANSITION;
+            card.style.left = `${deckRect.x}px`;
+            card.style.top = `${deckRect.y}px`;
         })});
     });
     await timer(__ANIM_MOVE_TIME); //__ANIM_MOVE_TIME
@@ -343,8 +370,8 @@ function getBlackJackCardPoints(hand){ //not the most efficient way to do calcul
     }
     const cardElements = getCardsFromHand(hand); //returns all the cards, minus the starting child
     var totalSum = cardElements.reduce((prev, cur)=>{return prev + getCardPoint(cur)}, 0); //starts with 0, so no type checking needed
-    while(totalSum > 21 && aceCounter > 0){ //if total is bust, and has ace in hand, -10 to total sum
-        aceCounter--; totalSum -= 10;
-    }
+    //if total is bust, and has ace in hand, -10 to total sum
+    while(totalSum > 21 && aceCounter > 0){ aceCounter--; totalSum -= 10;}
     return totalSum;
 }
+//#endregion

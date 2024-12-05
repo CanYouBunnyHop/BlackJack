@@ -9,15 +9,15 @@
 }
 #game{
     width: 100vw; touch-action: pan-y; /*prevents touch from scrolling on x-axis*/
-    --card-scale : 3; /*mobile use 5.7*/
-    --card-cascade-gap : calc(-30px * var(--card-scale));
+    --card-scale : 2; /*for desktop*/
+    --card-cascade-gap : calc(-2.8rem * var(--card-scale));
     --anim-time-scale : 0.3;
     --anim-move-time : calc(1s * var(--anim-time-scale));
     --anim-move-initial-transition : left var(--anim-move-time), top var(--anim-move-time);
     --slot-border-size : calc(1px * var(--card-scale));
     /* outline: red solid 1px;*/
 }
-@media (max-width: 600px) {#game{--card-scale : 5.7;}} /*for mobile screen size*/
+@media (max-width: 600px) { #game{--card-scale : 3.5;} } /*for mobile screen size*/
 
 .draggable{transition: var(--anim-move-initial-transition);}
 #game .slot{width: var(--card-width); height: var(--card-height); flex-shrink: 0;}
@@ -54,11 +54,12 @@
 .card-container{border: 0px;padding: 0px;}
 
 #game .card-container[ancestor-type="cascade"] .card-container{ /*when card-container is within a card-container*/
-    margin-top: calc(var(--card-cascade-gap)); /*-4px*/
+    margin-top: calc(var(--card-cascade-gap));
 }
 #game .card-container[ancestor-type="foundation"] .card-container{
-    /* --mtop : calc(-4 * var(--card-height));
-    margin-top: calc(var(--mtop) + -4px); */
+    --mtop : calc(var(--card-height) * -1);
+    margin-top: calc(var(--mtop) + -0.325em); /*magic 0.325em*/
+    
 }
 #game .active-slot, .active-slot .card-overlay, .dragging .card-overlay{
     animation: selection 0.3s forwards;

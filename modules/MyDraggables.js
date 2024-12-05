@@ -6,11 +6,18 @@ export function slotLogic(event, unhoverEvent='mouseleave'){
     let capacity = slot.getAttribute('capacity') ?? Infinity;
     if(slot.children.length >= capacity) return;
     slot.classList.add('active-slot');
-    if(document.querySelectorAll('.active-slot').forEach(el=>{if(el!==slot)el.classList.remove('active-slot')}));
+    document.querySelectorAll('.active-slot').forEach(el=>{if(el!==slot)el.classList.remove('active-slot')});
     slot.addEventListener(unhoverEvent, async _event=>{
         await requestFrame(()=>{},2); 
         slot.classList.remove('active-slot');
     });
+}
+export function hoveredLogic(event){
+    let item = event.target;
+    item.classList.add('hover');
+    document.querySelectorAll('.hover').forEach(el=>{if(el!==item)el.classList.remove('hover')});
+    item.addEventListener('pointerleave', ()=>item.classList.remove('hover')); //pointerleave works on mobile
+    document.addEventListener('mouseup', ()=>item.classList.remove('hover')); //fixes some desktop mouse input bugs
 }
 export async function startDrag(mdownEvent, targetParentElement, animationTime = 0,
     afterStartDrag = async (_startOut)=>{return {..._startOut}},
@@ -21,7 +28,9 @@ export async function startDrag(mdownEvent, targetParentElement, animationTime =
         const dragLock = (DRAG_TARGET.getAttribute('lock') ?? 'false')==='true';
         if(!DRAG_START_SLOT || document.body.getAttribute('transitioning') === 'true' || dragLock || !_allowsDrag) 
             return null;
-        document.body.setAttribute('drag-active', true);
+
+        requestFrame(()=>document.body.setAttribute('drag-active', true), 2); //delayed here for blackJack css to function properly
+
         const INITIAL_TRANSITION = DRAG_TARGET.style.transition;
         requestFrame(()=>{
             DRAG_TARGET.style.transition = `left 0s, top 0s, margin ${animationTime}s`;
@@ -73,7 +82,7 @@ function onDrag(moveEvent, _startOut){
     DRAG_TARGET.style.top = `${followPos.y}px`;
     if(followPos.x!==DRAG_START.POS.x||followPos.y!==DRAG_START.POS.y)
         document.body.setAttribute('transitioning', true);
-    else document.body.setAttribute('transitioning', false);
+    // else document.body.setAttribute('transitioning', false);
 
     //scroll document automatically when dragging
     //  if(moveEvent.clientY < 50){

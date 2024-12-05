@@ -18,9 +18,9 @@
         </div>
     </div>
     <div class="button-menu">
-        <button type="button" onmousedown="dealButtonLogic()" id="deal-but">Deal</button>
-        <button type="button" onmousedown="hitPButtonLogic()" id="hit-but">Hit</button> <!--Same as tapping the deck, might disable hitting deck-->
-        <button type="button" onmousedown="standButtonLogic()"id="stand-but">Stand</button> 
+        <button type="button" onmousedown="dealButtonLogic()" ontouchstart="dealButtonLogic()" id="deal-but">Deal</button>
+        <button type="button" onmousedown="hitPButtonLogic()" ontouchstart="hitPButtonLogic()" id="hit-but">Hit</button>
+        <button type="button" onmousedown="standButtonLogic()" ontouchstart="standButtonLogic()" id="stand-but">Stand</button> 
     </div>
     <div class="hand slot" id="dealer-hand" capacity='0'>
         <div class="slot-start draggable" lock="true"></div> <!--for inserting left most card-->
