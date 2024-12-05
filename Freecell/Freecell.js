@@ -149,10 +149,10 @@ async function resizeCard(){
 window.onresize = ()=>{resizeCard();}
 window.onload =()=>{
     resizeCard();
-    //dealCards();
+    dealCards();
     //debugDeal();
     //debugDealLong();
-    debugDealFoundation();
+    //debugDealFoundation();
     //It probably will never happen but it's possible starting deal is also winning deal
     FOUNDATIONS.forEach(el=>el._rankUp_='A'); //foundations only take Aces at the beginning
     setAllElementWithLogic('.slot', 'pointerenter', (ev)=>slotLogic(ev, 'pointerleave'));
@@ -239,8 +239,6 @@ async function winCondition(){
             let validCard = document.getElementById(validId);
             //if no validcard or valid card is not tail, continue to next foundation
             if(validCard === null || validCard._next_ !== null) continue;
-            //let mrect = foundation.getBoundingClientRect();
-            //let movePos = new Vector2(mrect.x, mrect.y);
             await requestFrame(); //delayed fixed animation, idk why
             await moveCardWithTransition(validCard, tail);
             everyCardLeft--;
@@ -321,15 +319,6 @@ async function releaseDrag(b4ReleaseOut){
     if(IS_VALID_MOVE && !IS_SAME_SLOT)
         MOVE_MANAGER.remember(new Memento(DRAG_TARGET, DRAG_START.SLOT));
     
-    // //create a temp div to get accurate position on
-    // const TEMP_TARGET = document.createElement('div');
-    // //add class to apply cascade offset in css
-    // TEMP_TARGET.classList.add('card-container');
-    // NEW_DESTINATION_SLOT.appendChild(TEMP_TARGET);
-    // let _destRect = TEMP_TARGET.getBoundingClientRect();
-    // const MOVE_POS = new Vector2(_destRect.x, _destRect.y);
-    // requestFrame(()=>TEMP_TARGET.remove());
-
     moveCardWithTransition(DRAG_TARGET, NEW_DESTINATION_SLOT);
 
     const START_CAS_ANCESTOR = DRAG_START.SLOT.closest('.cascade.slot.ancestor');
