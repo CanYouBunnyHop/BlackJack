@@ -61,16 +61,14 @@
     margin-top: calc(var(--mtop) + -0.325em); /*magic 0.325em*/
     
 }
-#game .active-slot, .active-slot .card-overlay, .dragging .card-overlay{
+#game .active-slot, 
+.active-slot .card-overlay, 
+.dragging .card-overlay{
     animation: selection 0.3s forwards;
 }
 @keyframes selection{
-    0% {
-        box-shadow: inset 50em 50em rgba(0, 0, 0, 0);
-    }
-    100% {
-        box-shadow: inset 50em 50em rgba(0, 0, 0, 0.2);
-    }
+    0% {box-shadow: inset 50em 50em rgba(0, 0, 0, 0);}
+    100% {box-shadow: inset 50em 50em rgba(0, 0, 0, 0.2);}
 }
 /* .debug-container{
     outline: blueviolet solid 4px;
