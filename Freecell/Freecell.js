@@ -133,7 +133,6 @@ function createCard(_suit, _rank){
 //#endregion
 
 //#region Freecell Main
-//
 async function resizeCard(){
     //1536 is standard default window size on desktop
     let gameWidth = getCSSDeclaredValue(GAME, 'width', true);
@@ -162,9 +161,13 @@ window.onload =()=>{
     document.ontouchend = touchToMouseEvent;
 };
 //Undo button 
+const UNDO_BUT = document.getElementById('undo');
+UNDO_BUT.disabled = true;
 window.undoButton = ()=>{
+    if(UNDO_BUT.disabled) return; //Mobile Touch input ignore disabled
     let moveUndo = MOVE_MANAGER.undo();
     moveCardWithTransition(...moveUndo.data);
+    if(MOVE_MANAGER.mementos.length <= 0) {UNDO_BUT.disabled = true; return;}
 } 
 function createSolitaireDeck(){
     let deck = [];
@@ -175,6 +178,7 @@ function createSolitaireDeck(){
     }
     return deck;
 }
+//#region debug deals
 function dealCardWithID(_cascadeAncestor, ..._cardIds){
     for(let cardId of _cardIds){
         cardId = [...cardId];
@@ -183,6 +187,7 @@ function dealCardWithID(_cascadeAncestor, ..._cardIds){
         _cascadeAncestor._tail_._appendCard(createCard(suit, rank));
     }
 }
+
 function debugDeal(){
     let cascades = [...CASCADES];
     dealCardWithID(cascades[0],'♠K','♥Q','♠J','♥10','♠9','♥8','♠7');
@@ -210,6 +215,7 @@ function debugDealFoundation(){
     dealCardWithID(cascades[2],'♣K','♣Q','♣J','♣10','♣9','♣8','♣7','♣6','♣5','♣4','♣3','♣2','♣A');
     dealCardWithID(cascades[3],'♦K','♦Q','♦J','♦10','♦9','♦8','♦7','♦6','♦5','♦4','♦3','♦2','♦A');
 }
+//#endregion
 function dealCards(){
     let cascadeEnds = [...CASCADES];
     let i = 0;
@@ -228,6 +234,7 @@ async function winCondition(){
     let foundations = [...FOUNDATIONS];
     //check for win-condition...
     if(!cascades.every(f=>{return f._isValid_})) return;
+    UNDO_BUT.disabled = true; //after winning disable undo button
     let everyCardLeft = cells.concat(cascades).reduce((allCards, curTab)=>allCards.concat(curTab._toArr()),[]).length;
     while(everyCardLeft > 0){
         for(let foundation of foundations){
@@ -274,9 +281,7 @@ function getAllowedDragCount(){
 //
 function solitaireStartDrag(mdownEvent){
     mdownEvent.stopPropagation();
-    
     let dTarget = mdownEvent.target.closest('.draggable');
-    document.getElementById('debug').innerHTML += dTarget.id;
     let dragCount = getInnerCount(dTarget);
     let allowDrag = isValidCascade(dTarget) && dragCount <= getAllowedDragCount();
     startDrag(mdownEvent, GAME, __ANIM_MOVE_TIME, afterStartDrag , releaseDrag, endTransition, allowDrag);
@@ -316,8 +321,11 @@ async function releaseDrag(b4ReleaseOut){
 
     const NEW_DESTINATION_SLOT = IS_VALID_MOVE ? dest : DRAG_START.SLOT;
     //save start position if move is valid and is not same slot
-    if(IS_VALID_MOVE && !IS_SAME_SLOT)
+    if(IS_VALID_MOVE && !IS_SAME_SLOT){
+        UNDO_BUT.disabled = false; //enable button
         MOVE_MANAGER.remember(new Memento(DRAG_TARGET, DRAG_START.SLOT));
+    }
+       
     
     moveCardWithTransition(DRAG_TARGET, NEW_DESTINATION_SLOT);
 
