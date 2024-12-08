@@ -147,7 +147,7 @@ async function resizeCard(){
 }
 window.onresize = ()=>{resizeCard();}
 window.onload =()=>{
-    resizeCard();
+    //resizeCard();
     dealCards();
     //debugDeal();
     //debugDealLong();
