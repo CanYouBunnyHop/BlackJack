@@ -145,7 +145,7 @@ async function resizeCard(){
     GAME.style.height = `${totalHeight}px`; //resize game height to tallest possible, avoid resizing
     console.log(totalHeight);
 }
-window.onresize = ()=>{resizeCard();}
+//window.onresize = ()=>{resizeCard();}
 window.onload =()=>{
     //resizeCard();
     dealCards();
